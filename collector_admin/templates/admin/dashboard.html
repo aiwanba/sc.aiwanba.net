@@ -1,0 +1,18 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+    <!-- 初始数据注入 -->
+    <script id="initial-data" type="application/json">
+        {{ {
+            "isRunning": collector_status.is_running,
+            "servers": servers,
+            "products": products,
+            "productGroups": product_groups,
+            "collectorStatus": collector_status
+        }|tojson|safe }}
+    </script>
+
+    {% include "admin/_status.html" %}
+    {% include "admin/_task_form.html" %}
+    {% include "admin/_task_list.html" %}
+{% endblock %} 
