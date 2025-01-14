@@ -226,19 +226,25 @@ export default {
         { label: '今日', value: 'today' },
         { label: '一周', value: 'week' },
         { label: '所有', value: 'all' }
-      ]
+      ],
+      abortController: null, // 添加请求控制器
+      isLoading: false,
+      updateTimer: null,
+      lastUpdateTime: 0
     }
   },
   watch: {
     // 监听选择的品质变化，更新图表
     selectedQuality: {
       handler(newVal) {
-        this.updatePriceChart();
+        this.debounceUpdateChart();
       }
     },
     selectedTimeRange: {
       handler(newVal) {
-        this.fetchPriceHistory();
+        if (!this.isLoading) {
+          this.fetchPriceHistory();
+        }
       }
     }
   },
@@ -328,101 +334,298 @@ export default {
         this.pricesByQuality = [];
       }
     },
-    // 初始化价格趋势图
-    initPriceChart() {
-      if (this.priceChart) {
-        this.priceChart.dispose();
+    // 添加防抖方法
+    debounceUpdateChart() {
+      if (this.updateTimer) {
+        clearTimeout(this.updateTimer);
       }
-      this.priceChart = echarts.init(document.getElementById('priceChart'));
-      this.updatePriceChart();
+      this.updateTimer = setTimeout(() => {
+        this.updatePriceChart();
+      }, 300); // 300ms 延迟
     },
-    // 更新价格趋势图数据
-    updatePriceChart() {
-      if (!this.priceChart || !this.priceHistory.length || !this.selectedQuality) {
-        // 如果没有选择品质，清空图表
-        if (this.priceChart) {
-          this.priceChart.setOption({
-            series: []
+    // 修改初始化图表方法
+    initPriceChart() {
+      this.disposePriceChart();
+      try {
+        const chartDom = document.getElementById('priceChart');
+        if (chartDom) {
+          // 设置渲染模式
+          this.priceChart = echarts.init(chartDom, null, {
+            renderer: 'canvas', // 使用 canvas 渲染器
+            useDirtyRect: true // 启用脏矩形渲染优化
           });
+          
+          // 配置加载动画
+          this.priceChart.showLoading({
+            text: '加载中...',
+            maskColor: 'rgba(255, 255, 255, 0.8)',
+            textColor: '#409eff',
+            spinnerRadius: 6,
+            lineWidth: 3,
+            fontSize: 14
+          });
+
+          // 设置主题
+          this.priceChart.setOption({
+            backgroundColor: '#ffffff',
+            textStyle: {
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+            }
+          });
+
+          this.updatePriceChart();
         }
+      } catch (error) {
+        console.error('初始化图表失败:', error);
+      }
+    },
+    // 销毁图表实例
+    disposePriceChart() {
+      if (this.priceChart) {
+        try {
+          this.priceChart.dispose();
+        } catch (error) {
+          console.error('销毁图表失败:', error);
+        }
+        this.priceChart = null;
+      }
+    },
+    // 处理窗口大小变化
+    handleResize() {
+      if (this.priceChart) {
+        this.priceChart.resize();
+      }
+    },
+    // 修改更新图表方法
+    updatePriceChart() {
+      if (!this.priceChart || !this.selectedQuality) {
         return;
       }
 
-      const data = this.getPriceDataByQuality(this.selectedQuality);
-      const color = this.getQualityColor(this.selectedQuality);
+      try {
+        const now = Date.now();
+        if (now - this.lastUpdateTime < 200) {
+          return;
+        }
+        this.lastUpdateTime = now;
 
-      const option = {
-        tooltip: {
-          trigger: 'axis',
-          formatter: (params) => {
-            const param = params[0];
-            return `${param.axisValue}<br/>Q${this.selectedQuality}: ${param.value.toFixed(3)}`;
-          }
-        },
-        grid: {
-          left: '3%',
-          right: '4%',
-          bottom: '3%',
-          containLabel: true
-        },
-        xAxis: {
-          type: 'time',
-          boundaryGap: false,
-          axisLabel: {
-            formatter: (value) => {
-              const date = new Date(value);
-              return date.getHours().toString().padStart(2, '0') + ':' +
-                     date.getMinutes().toString().padStart(2, '0');
-            }
-          }
-        },
-        yAxis: {
-          type: 'value',
-          axisLabel: {
-            formatter: '{value}'
-          },
-          scale: true // 使用动态比例
-        },
-        series: [{
-          name: `Q${this.selectedQuality}`,
-          type: 'line',
-          smooth: true,
-          symbol: 'circle',
-          symbolSize: 6,
-          data: data,
-          lineStyle: {
-            width: 2,
-            color: color
-          },
-          itemStyle: {
-            color: color
-          },
-          areaStyle: {
-            color: {
-              type: 'linear',
-              x: 0,
-              y: 0,
-              x2: 0,
-              y2: 1,
-              colorStops: [{
-                offset: 0,
-                color: color + '40' // 40 是透明度
-              }, {
-                offset: 1,
-                color: color + '00'
-              }]
-            }
-          }
-        }]
-      };
+        this.priceChart.showLoading();
 
-      this.priceChart.setOption(option);
+        const data = this.getPriceDataByQuality(this.selectedQuality);
+        if (!data || data.length === 0) {
+          this.priceChart.hideLoading();
+          this.priceChart.clear();
+          return;
+        }
+
+        // 分离价格和成交量数据
+        const priceData = data.map(item => [item[0], item[1]]);
+        const volumeData = data.map(item => [item[0], item[2] || 0]);
+
+        // 计算价格范围
+        const prices = priceData.map(item => item[1]);
+        const minPrice = Math.min(...prices);
+        const maxPrice = Math.max(...prices);
+        const priceRange = maxPrice - minPrice;
+        const pricePadding = priceRange * 0.1;
+
+        // 计算成交量范围
+        const volumes = volumeData.map(item => item[1]);
+        const maxVolume = Math.max(...volumes);
+
+        const color = this.getQualityColor(this.selectedQuality);
+        const option = {
+          animation: false,
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+              type: 'cross'
+            },
+            formatter: (params) => {
+              const date = new Date(params[0].value[0]);
+              const time = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+              let result = `${time}<br/>`;
+              params.forEach(param => {
+                if (param.seriesName === `Q${this.selectedQuality}`) {
+                  result += `价格: ${param.value[1].toFixed(3)}<br/>`;
+                } else {
+                  result += `成交量: ${param.value[1]}<br/>`;
+                }
+              });
+              return result;
+            }
+          },
+          axisPointer: {
+            link: { xAxisIndex: 'all' }
+          },
+          grid: [{
+            left: '3%',
+            right: '4%',
+            top: '30',
+            height: '60%'
+          }, {
+            left: '3%',
+            right: '4%',
+            top: '75%',
+            height: '20%'
+          }],
+          xAxis: [{
+            type: 'time',
+            boundaryGap: false,
+            axisLine: { show: true },
+            axisTick: { show: true },
+            axisLabel: {
+              formatter: (value) => {
+                const date = new Date(value);
+                return date.getHours().toString().padStart(2, '0') + ':' +
+                       date.getMinutes().toString().padStart(2, '0');
+              },
+              fontSize: 10
+            },
+            splitLine: {
+              show: true,
+              lineStyle: {
+                color: '#eee',
+                type: 'dashed'
+              }
+            }
+          }, {
+            type: 'time',
+            gridIndex: 1,
+            boundaryGap: false,
+            axisLine: { show: true },
+            axisTick: { show: true },
+            axisLabel: {
+              formatter: (value) => {
+                const date = new Date(value);
+                return date.getHours().toString().padStart(2, '0') + ':' +
+                       date.getMinutes().toString().padStart(2, '0');
+              },
+              fontSize: 10
+            },
+            splitLine: {
+              show: false
+            }
+          }],
+          yAxis: [{
+            type: 'value',
+            name: '价格',
+            min: Math.max(0, minPrice - pricePadding),
+            max: maxPrice + pricePadding,
+            axisLabel: {
+              formatter: '{value}',
+              fontSize: 10
+            },
+            splitLine: {
+              show: true,
+              lineStyle: {
+                color: '#eee',
+                type: 'dashed'
+              }
+            }
+          }, {
+            type: 'value',
+            name: '成交量',
+            gridIndex: 1,
+            min: 0,
+            max: maxVolume * 1.2,
+            axisLabel: {
+              fontSize: 10
+            },
+            splitLine: {
+              show: true,
+              lineStyle: {
+                color: '#eee',
+                type: 'dashed'
+              }
+            }
+          }],
+          series: [{
+            name: `Q${this.selectedQuality}`,
+            type: 'line',
+            sampling: 'lttb',
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 4,
+            data: priceData,
+            lineStyle: {
+              width: 2,
+              color: color
+            },
+            itemStyle: {
+              color: color,
+              borderWidth: 1
+            },
+            emphasis: {
+              itemStyle: {
+                borderWidth: 2
+              }
+            },
+            areaStyle: {
+              color: {
+                type: 'linear',
+                x: 0,
+                y: 0,
+                x2: 0,
+                y2: 1,
+                colorStops: [{
+                  offset: 0,
+                  color: color + '20'
+                }, {
+                  offset: 1,
+                  color: color + '00'
+                }]
+              }
+            }
+          }, {
+            name: '成交量',
+            type: 'bar',
+            xAxisIndex: 1,
+            yAxisIndex: 1,
+            data: volumeData,
+            itemStyle: {
+              color: '#ccc',
+              opacity: 0.8
+            }
+          }]
+        };
+
+        this.priceChart.setOption(option, true);
+        this.priceChart.hideLoading();
+      } catch (error) {
+        console.error('更新图表失败:', error);
+        this.priceChart.hideLoading();
+      }
     },
-    // 获取指定品质的价格数据
+    // 优化数据处理方法
     getPriceDataByQuality(quality) {
-      return this.priceHistory
-        .filter(item => item.quality === quality)
-        .map(item => [item.posted_time, item.price]);
+      if (!quality || !this.priceHistory.length) {
+        return [];
+      }
+
+      const qualityNum = parseInt(quality);
+      const sortedData = this.priceHistory
+        .filter(item => item.quality === qualityNum)
+        .map(item => {
+          const timestamp = new Date(item.posted_time).getTime();
+          const price = parseFloat(item.price);
+          const volume = parseInt(item.volume) || 0;
+          return [timestamp, isNaN(price) ? 0 : price, volume];
+        })
+        .sort((a, b) => a[0] - b[0]);
+
+      // 数据去重，保留最新的数据
+      const uniqueData = [];
+      const timestampMap = new Map();
+      
+      for (const item of sortedData) {
+        const timestamp = item[0];
+        if (!timestampMap.has(timestamp) || item[1] > timestampMap.get(timestamp)[1]) {
+          timestampMap.set(timestamp, item);
+        }
+      }
+      
+      return Array.from(timestampMap.values());
     },
     // 获取品质对应的颜色
     getQualityColor(quality) {
@@ -437,36 +640,72 @@ export default {
       }
       return this.qualityColors[quality];
     },
-    // 获取今日价格历史数据
+    // 修改获取价格历史数据方法
     async fetchPriceHistory() {
+      if (this.isLoading) return;
+      
+      // 取消之前的请求
+      if (this.abortController) {
+        this.abortController.abort();
+      }
+      
+      // 创建新的请求控制器
+      this.abortController = new AbortController();
+      this.isLoading = true;
+      
+      if (this.priceChart) {
+        this.priceChart.showLoading();
+      }
+
       try {
         const response = await fetch(
-          `/market/api/prices/history/${this.serverType}/${this.productId}?range=${this.selectedTimeRange}`
+          `/market/api/prices/history/${this.serverType}/${this.productId}?range=${this.selectedTimeRange}`,
+          {
+            signal: this.abortController.signal
+          }
         );
+        
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
         const data = await response.json();
-        this.priceHistory = data;
         
-        // 提取所有不同的品质并排序
-        this.availableQualities = [...new Set(data.map(item => item.quality))].sort((a, b) => a - b);
-        
-        // 如果 Q0 在可用品质中，则选择 Q0，否则保持当前选择
-        if (this.availableQualities.includes(0)) {
-            this.selectedQuality = 0;
-        } else if (!this.selectedQuality || !this.availableQualities.includes(this.selectedQuality)) {
-            // 如果当前没有选择品质或选择的品质不在可用列表中，则选择第一个可用品质
-            this.selectedQuality = this.availableQualities[0] || '';
+        // 如果请求已被取消，不更新数据
+        if (this.abortController.signal.aborted) {
+          return;
         }
         
-        // 初始化图表
+        this.priceHistory = data;
+        this.availableQualities = [...new Set(data.map(item => item.quality))].sort((a, b) => a - b);
+        
+        if (this.availableQualities.includes(0)) {
+          this.selectedQuality = 0;
+        } else if (!this.selectedQuality || !this.availableQualities.includes(this.selectedQuality)) {
+          this.selectedQuality = this.availableQualities[0] || '';
+        }
+        
         this.$nextTick(() => {
-            this.initPriceChart();
+          this.updatePriceChart();
         });
       } catch (error) {
+        if (error.name === 'AbortError') {
+          console.log('请求已取消');
+          return;
+        }
+        
         console.error('获取价格历史数据失败:', error);
         this.priceHistory = [];
+        if (this.priceChart) {
+          this.priceChart.hideLoading();
+        }
+      } finally {
+        if (!this.abortController.signal.aborted) {
+          this.isLoading = false;
+          if (this.priceChart) {
+            this.priceChart.hideLoading();
+          }
+        }
       }
     },
     // 获取当前品质的数据点数
@@ -474,8 +713,9 @@ export default {
       if (!this.selectedQuality) return 0;
       return this.priceHistory.filter(item => item.quality === this.selectedQuality).length;
     },
-    // 切换时间范围
+    // 修改切换时间范围方法
     changeTimeRange(range) {
+      if (this.isLoading || this.selectedTimeRange === range) return;
       this.selectedTimeRange = range;
     },
     // 获取时间范围显示文本
@@ -489,18 +729,32 @@ export default {
     if (pathParts.length >= 4) {
       this.serverType = parseInt(pathParts[2]);
       this.productId = parseInt(pathParts[3]);
-      // 获取当天价格数据
+      
+      // 初始化图表实例
+      this.$nextTick(() => {
+        this.initPriceChart();
+      });
+      
+      // 获取数据
       this.fetchTodayPrices();
-      // 获取价格历史数据
       this.fetchPriceHistory();
+
+      // 添加窗口大小变化监听
+      window.addEventListener('resize', this.handleResize);
     }
   },
   beforeDestroy() {
-    // 销毁图表实例
-    if (this.priceChart) {
-      this.priceChart.dispose();
-      this.priceChart = null;
+    // 取消所有未完成的请求
+    if (this.abortController) {
+      this.abortController.abort();
     }
+    
+    if (this.updateTimer) {
+      clearTimeout(this.updateTimer);
+    }
+    
+    window.removeEventListener('resize', this.handleResize);
+    this.disposePriceChart();
   }
 }
 </script>
