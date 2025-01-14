@@ -5,7 +5,7 @@ import path from 'path'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
-  base: '/market/static/',
+  base: './',
   build: {
     outDir: '../dist',
     assetsDir: 'assets',
@@ -18,11 +18,18 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    open: true
+    open: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true
+      }
+    }
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src')
+      '@': path.resolve(__dirname, './'),
+      'vue': 'vue/dist/vue.esm-bundler.js'
     }
   }
 }) 
