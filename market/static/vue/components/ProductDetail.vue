@@ -78,58 +78,122 @@
               <div class="section-header">商品品质</div>
               <div class="section-content">
                 <table class="info-table">
-                  <tr>
-                    <td class="info-label">Q0</td>
-                    <td class="info-value">-</td>
-                  </tr>
-                  <tr>
-                    <td class="info-label">Q1</td>
-                    <td class="info-value">-</td>
-                  </tr>
-                  <tr>
-                    <td class="info-label">Q2</td>
-                    <td class="info-value">-</td>
-                  </tr>
-                  <tr>
-                    <td class="info-label">Q3</td>
-                    <td class="info-value">-</td>
-                  </tr>
-                  <tr>
-                    <td class="info-label">Q4</td>
-                    <td class="info-value">-</td>
-                  </tr>
-                  <tr>
-                    <td class="info-label">Q5</td>
-                    <td class="info-value">-</td>
-                  </tr>
-                  <tr>
-                    <td class="info-label">Q6</td>
-                    <td class="info-value">-</td>
-                  </tr>
-                  <tr>
-                    <td class="info-label">Q7</td>
-                    <td class="info-value">-</td>
-                  </tr>
-                  <tr>
-                    <td class="info-label">Q8</td>
-                    <td class="info-value">-</td>
-                  </tr>
-                  <tr>
-                    <td class="info-label">Q9</td>
-                    <td class="info-value">-</td>
-                  </tr>
-                  <tr>
-                    <td class="info-label">Q10</td>
-                    <td class="info-value">-</td>
-                  </tr>
-                  <tr>
-                    <td class="info-label">Q11</td>
-                    <td class="info-value">-</td>
-                  </tr>
-                  <tr>
-                    <td class="info-label">Q12</td>
-                    <td class="info-value">-</td>
-                  </tr>
+                  <thead>
+                    <tr>
+                      <th class="info-header">品质等级</th>
+                      <th class="info-header">最新价格</th>
+                      <th class="info-header">最低价格</th>
+                      <th class="info-header">最高价格</th>
+                      <th class="info-header">平均价格</th>
+                      <th class="info-header">更新时间</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="info-label">Q0</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value time">-</td>
+                    </tr>
+                    <tr>
+                      <td class="info-label">Q1</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value time">-</td>
+                    </tr>
+                    <tr>
+                      <td class="info-label">Q2</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value time">-</td>
+                    </tr>
+                    <tr>
+                      <td class="info-label">Q3</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value time">-</td>
+                    </tr>
+                    <tr>
+                      <td class="info-label">Q4</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value time">-</td>
+                    </tr>
+                    <tr>
+                      <td class="info-label">Q5</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value time">-</td>
+                    </tr>
+                    <tr>
+                      <td class="info-label">Q6</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value time">-</td>
+                    </tr>
+                    <tr>
+                      <td class="info-label">Q7</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value time">-</td>
+                    </tr>
+                    <tr>
+                      <td class="info-label">Q8</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value time">-</td>
+                    </tr>
+                    <tr>
+                      <td class="info-label">Q9</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value time">-</td>
+                    </tr>
+                    <tr>
+                      <td class="info-label">Q10</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value time">-</td>
+                    </tr>
+                    <tr>
+                      <td class="info-label">Q11</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value time">-</td>
+                    </tr>
+                    <tr>
+                      <td class="info-label">Q12</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value price">-</td>
+                      <td class="info-value time">-</td>
+                    </tr>
+                  </tbody>
                 </table>
               </div>
             </div>
@@ -360,7 +424,7 @@ export default {
 }
 
 .detail-section {
-  padding: 12px;
+  padding: 8px;
   border-bottom: 1px solid #eee;
   background-color: #fff;
 }
@@ -373,13 +437,13 @@ export default {
   font-size: 12px;
   font-weight: bold;
   color: #333;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
+  margin-bottom: 4px;
+  padding-bottom: 4px;
   border-bottom: 2px solid #45b97c;
 }
 
 .section-content {
-  padding: 8px;
+  padding: 4px;
 }
 
 /* 基本信息表格样式 */
@@ -392,23 +456,59 @@ export default {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.info-table td {
-  padding: 6px 8px;
+.info-table td, .info-table th {
+  padding: 4px 6px;
   border: 1px solid #ebeef5;
-  font-size: 12px;
-  line-height: 1.2;
+  font-size: 11px;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.info-table th.info-header {
+  background-color: #f8f9fa;
+  color: #333;
+  font-weight: bold;
+  white-space: nowrap;
+  font-size: 11px;
+  padding: 4px 4px;
 }
 
 .info-table .info-label {
-  width: 30%;
+  width: 60px;
   color: #666;
-  font-size: 12px;
+  font-size: 11px;
   background-color: #f8f9fa;
+  text-align: center;
 }
 
 .info-table .info-value {
   color: #333;
-  font-size: 12px;
+  font-size: 11px;
+  text-align: center;
+}
+
+.info-table .info-value.price {
+  font-family: Monaco, monospace;
+  color: #45b97c;
+  font-size: 11px;
+}
+
+.info-table .info-value.time {
+  font-family: Monaco, monospace;
+  color: #666;
+  font-size: 10px;
+}
+
+/* 表格行悬停效果 */
+.info-table tbody tr:hover {
+  background-color: #f5f7fa;
+}
+
+/* 价格为空时的样式 */
+.info-table .info-value.price:empty::before,
+.info-table .info-value.price:contains("-")::before {
+  content: "-";
+  color: #999;
 }
 
 /* 左侧内容布局 */
@@ -420,7 +520,7 @@ export default {
 .detail-left {
   flex: 1;
   min-width: 300px;
-  max-width: 400px;
+  max-width: 800px;
   background-color: #fff;
   border-right: 1px solid #dcdfe6;
 }
