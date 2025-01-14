@@ -188,4 +188,53 @@ class ProductPrice:
             return self.db.fetch_all(sql, (start_date,))
             
         except Exception as e:
-            raise Exception(f"获取历史价格数据失败: {str(e)}") 
+            raise Exception(f"获取历史价格数据失败: {str(e)}")
+            
+    def get_price_history_by_range(self, server_type: int, product_id: int, time_range: str = 'today'):
+        """根据时间范围获取价格历史数据
+        
+        Args:
+            server_type: 服务器类型
+            product_id: 商品ID
+            time_range: 时间范围
+                - today: 今日数据
+                - week: 最近一周数据
+                - all: 所有历史数据
+        """
+        try:
+            now = datetime.now()
+            table_name = self.get_table_name(server_type, product_id)
+            
+            # 根据时间范围确定查询起始时间
+            if time_range == 'today':
+                start_time = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            elif time_range == 'week':
+                start_time = now - timedelta(days=7)
+            else:  # 'all'
+                start_time = datetime(2000, 1, 1)  # 使用一个足够早的时间
+                
+            end_time = now
+            
+            # 查询指定时间范围内的所有有效价格数据
+            sql = f"""
+                SELECT 
+                    quality,
+                    price,
+                    posted_time
+                FROM {table_name}
+                WHERE posted_time BETWEEN %s AND %s
+                AND is_valid = 1
+                ORDER BY quality ASC, posted_time ASC
+            """
+            
+            result = self.db.fetch_all(sql, (start_time, end_time))
+            
+            # 处理数据，确保价格是浮点数
+            return [{
+                'quality': row['quality'],
+                'price': float(row['price']),
+                'posted_time': row['posted_time'].strftime('%Y-%m-%d %H:%M:%S')
+            } for row in result]
+            
+        except Exception as e:
+            raise Exception(f"获取价格历史数据失败: {str(e)}") 

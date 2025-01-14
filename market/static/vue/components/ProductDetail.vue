@@ -116,15 +116,49 @@
               <div class="section-header">价格信息</div>
               <div class="section-content">
                 <div class="price-chart">
+                  <!-- 筛选器 -->
+                  <div class="chart-filters">
+                    <!-- 品质选择器 -->
+                    <div class="filter-item">
+                      <div class="filter-label">选择品质：</div>
+                      <select v-model="selectedQuality" class="filter-select">
+                        <option value="">请选择品质</option>
+                        <option v-for="quality in availableQualities" 
+                                :key="quality" 
+                                :value="quality">
+                          Q{{ quality }}
+                        </option>
+                      </select>
+                    </div>
+                    <!-- 时间范围选择器 -->
+                    <div class="filter-item">
+                      <div class="filter-label">时间范围：</div>
+                      <div class="time-range-buttons">
+                        <button 
+                          v-for="range in timeRanges" 
+                          :key="range.value"
+                          :class="['range-btn', { active: selectedTimeRange === range.value }]"
+                          @click="changeTimeRange(range.value)">
+                          {{ range.label }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                   <!-- 价格趋势图 -->
                   <div id="priceChart" style="width: 100%; height: 400px;"></div>
-                  <div class="chart-legend">
-                    <div class="legend-item" v-for="quality in activeQualities" :key="quality">
-                      <span class="legend-color" :style="{ backgroundColor: getQualityColor(quality) }"></span>
-                      <span class="legend-label">Q{{ quality }}</span>
-                      <button class="legend-btn" @click="toggleQuality(quality)">
-                        {{ isQualityActive(quality) ? '隐藏' : '显示' }}
-                      </button>
+                  <!-- 当前品质信息 -->
+                  <div v-if="selectedQuality !== null" class="quality-info">
+                    <div class="info-item">
+                      <span class="info-label">当前品质：</span>
+                      <span class="info-value">Q{{ selectedQuality }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">数据点数：</span>
+                      <span class="info-value">{{ getCurrentQualityDataCount() }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">时间范围：</span>
+                      <span class="info-value">{{ getTimeRangeLabel() }}</span>
                     </div>
                   </div>
                 </div>
@@ -184,8 +218,28 @@ export default {
       pricesByQuality: [], // 按品质分类的价格数据
       priceChart: null, // ECharts 实例
       priceHistory: [], // 价格历史数据
-      activeQualities: [], // 当前显示的品质列表
+      availableQualities: [], // 可用的品质列表
+      selectedQuality: 0, // 默认选择 Q0
       qualityColors: {}, // 品质对应的颜色
+      selectedTimeRange: 'today', // 默认显示今日数据
+      timeRanges: [
+        { label: '今日', value: 'today' },
+        { label: '一周', value: 'week' },
+        { label: '所有', value: 'all' }
+      ]
+    }
+  },
+  watch: {
+    // 监听选择的品质变化，更新图表
+    selectedQuality: {
+      handler(newVal) {
+        this.updatePriceChart();
+      }
+    },
+    selectedTimeRange: {
+      handler(newVal) {
+        this.fetchPriceHistory();
+      }
     }
   },
   computed: {
@@ -284,33 +338,25 @@ export default {
     },
     // 更新价格趋势图数据
     updatePriceChart() {
-      if (!this.priceChart || !this.priceHistory.length) return;
-
-      const series = this.activeQualities.map(quality => ({
-        name: `Q${quality}`,
-        type: 'line',
-        smooth: true,
-        symbol: 'circle',
-        symbolSize: 6,
-        data: this.getPriceDataByQuality(quality),
-        lineStyle: {
-          width: 2,
-          color: this.getQualityColor(quality)
-        },
-        itemStyle: {
-          color: this.getQualityColor(quality)
+      if (!this.priceChart || !this.priceHistory.length || !this.selectedQuality) {
+        // 如果没有选择品质，清空图表
+        if (this.priceChart) {
+          this.priceChart.setOption({
+            series: []
+          });
         }
-      }));
+        return;
+      }
+
+      const data = this.getPriceDataByQuality(this.selectedQuality);
+      const color = this.getQualityColor(this.selectedQuality);
 
       const option = {
         tooltip: {
           trigger: 'axis',
           formatter: (params) => {
-            let result = `${params[0].axisValue}<br/>`;
-            params.forEach(param => {
-              result += `${param.seriesName}: ${param.value.toFixed(3)}<br/>`;
-            });
-            return result;
+            const param = params[0];
+            return `${param.axisValue}<br/>Q${this.selectedQuality}: ${param.value.toFixed(3)}`;
           }
         },
         grid: {
@@ -334,9 +380,40 @@ export default {
           type: 'value',
           axisLabel: {
             formatter: '{value}'
-          }
+          },
+          scale: true // 使用动态比例
         },
-        series
+        series: [{
+          name: `Q${this.selectedQuality}`,
+          type: 'line',
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: 6,
+          data: data,
+          lineStyle: {
+            width: 2,
+            color: color
+          },
+          itemStyle: {
+            color: color
+          },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [{
+                offset: 0,
+                color: color + '40' // 40 是透明度
+              }, {
+                offset: 1,
+                color: color + '00'
+              }]
+            }
+          }
+        }]
       };
 
       this.priceChart.setOption(option);
@@ -360,24 +437,12 @@ export default {
       }
       return this.qualityColors[quality];
     },
-    // 切换品质显示状态
-    toggleQuality(quality) {
-      const index = this.activeQualities.indexOf(quality);
-      if (index > -1) {
-        this.activeQualities.splice(index, 1);
-      } else {
-        this.activeQualities.push(quality);
-      }
-      this.updatePriceChart();
-    },
-    // 判断品质是否处于激活状态
-    isQualityActive(quality) {
-      return this.activeQualities.includes(quality);
-    },
     // 获取今日价格历史数据
     async fetchPriceHistory() {
       try {
-        const response = await fetch(`/market/api/prices/history/today/${this.serverType}/${this.productId}`);
+        const response = await fetch(
+          `/market/api/prices/history/${this.serverType}/${this.productId}?range=${this.selectedTimeRange}`
+        );
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -385,17 +450,38 @@ export default {
         this.priceHistory = data;
         
         // 提取所有不同的品质并排序
-        const qualities = [...new Set(data.map(item => item.quality))].sort((a, b) => a - b);
-        this.activeQualities = qualities;
+        this.availableQualities = [...new Set(data.map(item => item.quality))].sort((a, b) => a - b);
+        
+        // 如果 Q0 在可用品质中，则选择 Q0，否则保持当前选择
+        if (this.availableQualities.includes(0)) {
+            this.selectedQuality = 0;
+        } else if (!this.selectedQuality || !this.availableQualities.includes(this.selectedQuality)) {
+            // 如果当前没有选择品质或选择的品质不在可用列表中，则选择第一个可用品质
+            this.selectedQuality = this.availableQualities[0] || '';
+        }
         
         // 初始化图表
         this.$nextTick(() => {
-          this.initPriceChart();
+            this.initPriceChart();
         });
       } catch (error) {
         console.error('获取价格历史数据失败:', error);
         this.priceHistory = [];
       }
+    },
+    // 获取当前品质的数据点数
+    getCurrentQualityDataCount() {
+      if (!this.selectedQuality) return 0;
+      return this.priceHistory.filter(item => item.quality === this.selectedQuality).length;
+    },
+    // 切换时间范围
+    changeTimeRange(range) {
+      this.selectedTimeRange = range;
+    },
+    // 获取时间范围显示文本
+    getTimeRangeLabel() {
+      const range = this.timeRanges.find(r => r.value === this.selectedTimeRange);
+      return range ? range.label : '';
     }
   },
   mounted() {
@@ -1001,5 +1087,146 @@ export default {
   color: #409eff;
   border-color: #c6e2ff;
   background-color: #ecf5ff;
+}
+
+/* 品质选择器样式 */
+.quality-selector {
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.selector-header {
+  font-size: 14px;
+  color: #606266;
+  margin-bottom: 8px;
+}
+
+.selector-content {
+  display: flex;
+  align-items: center;
+}
+
+.quality-select {
+  width: 200px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background-color: #fff;
+  font-size: 14px;
+  color: #606266;
+  cursor: pointer;
+  outline: none;
+}
+
+.quality-select:hover {
+  border-color: #c0c4cc;
+}
+
+.quality-select:focus {
+  border-color: #409eff;
+}
+
+/* 品质信息样式 */
+.quality-info {
+  margin-top: 16px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 150px;
+}
+
+.info-label {
+  color: #909399;
+  font-size: 14px;
+}
+
+.info-value {
+  color: #303133;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* 筛选器样式 */
+.chart-filters {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filter-label {
+  font-size: 14px;
+  color: #606266;
+  white-space: nowrap;
+}
+
+.filter-select {
+  width: 200px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background-color: #fff;
+  font-size: 14px;
+  color: #606266;
+  cursor: pointer;
+  outline: none;
+}
+
+.filter-select:hover {
+  border-color: #c0c4cc;
+}
+
+.filter-select:focus {
+  border-color: #409eff;
+}
+
+/* 时间范围按钮样式 */
+.time-range-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.range-btn {
+  padding: 6px 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #606266;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.range-btn:hover {
+  color: #409eff;
+  border-color: #c6e2ff;
+  background-color: #ecf5ff;
+}
+
+.range-btn.active {
+  color: #fff;
+  background-color: #409eff;
+  border-color: #409eff;
 }
 </style> 
