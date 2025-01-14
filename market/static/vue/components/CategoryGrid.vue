@@ -21,22 +21,20 @@
     
     <div class="sub-nav">
       <div class="nav-section">
-        <div class="server-selector">
-          <transition name="slide-fade">
-            <div v-if="serverType === 0" 
-                 class="server-option active"
-                 @click="switchServer(1)">
-              商业大亨
-            </div>
-            <div v-else 
-                 class="server-option active"
-                 @click="switchServer(0)">
-              企业家
-            </div>
-          </transition>
-        </div>
-        <div class="nav-arrow"></div>
         <div class="nav-item active">市场</div>
+        <div class="nav-arrow"></div>
+        <div v-if="serverType === 0" 
+             class="nav-item"
+             style="background-color: #fff; color: #333;"
+             @click="switchServer(1)">
+          商业大亨
+        </div>
+        <div v-else 
+             class="nav-item"
+             style="background-color: #fff; color: #333;"
+             @click="switchServer(0)">
+          企业家
+        </div>
       </div>
     </div>
 
@@ -448,36 +446,6 @@ export default {
 
 .nav-btn:hover .menu-icon {
   opacity: 0.8;
-}
-
-/* 服务器选择器样式 */
-.server-selector {
-  display: flex;
-  height: 100%;
-  background-color: #f0f0f0;
-  border-radius: 4px;
-  overflow: hidden;
-  position: relative;
-  min-width: 100px;
-}
-
-.server-option {
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  font-weight: bold;
-  color: #333;
-  height: 100%;
-  width: 100%;
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-
-.server-option.active {
-  background-color: #45b97c;
-  color: #fff;
 }
 
 /* 过渡动画 */

@@ -21,23 +21,21 @@
     <!-- 子导航栏 -->
     <div class="sub-nav">
       <div class="nav-section">
-        <div class="server-selector">
-          <transition name="slide-fade">
-            <div v-if="serverType === 0" 
-                 class="server-option active"
-                 @click="switchServer(1)">
-              商业大亨
-            </div>
-            <div v-else 
-                 class="server-option active"
-                 @click="switchServer(0)">
-              企业家
-            </div>
-          </transition>
-        </div>
-        <div class="nav-arrow"></div>
         <div class="nav-item">
           <a href="/market" class="nav-link">市场</a>
+        </div>
+        <div class="nav-arrow"></div>
+        <div v-if="serverType === 0" 
+             class="nav-item"
+             style="background-color: #fff; color: #333;"
+             @click="switchServer(1)">
+          商业大亨
+        </div>
+        <div v-else 
+             class="nav-item"
+             style="background-color: #fff; color: #333;"
+             @click="switchServer(0)">
+          企业家
         </div>
         <div class="nav-arrow"></div>
         <div class="nav-item active">商品详情</div>
