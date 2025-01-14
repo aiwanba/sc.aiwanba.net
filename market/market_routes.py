@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, jsonify
 from .models import ProductPrice
+from datetime import datetime, timedelta
 
 # 创建市场蓝图
 market_bp = Blueprint('market', __name__, url_prefix='/market')
@@ -20,6 +21,16 @@ def get_today_prices(server_type, product_id):
     try:
         price_model = ProductPrice()
         result = price_model.get_today_prices(server_type, product_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@market_bp.route('/api/prices/history/today/<int:server_type>/<int:product_id>')
+def get_today_price_history(server_type, product_id):
+    """获取今日价格历史数据"""
+    try:
+        price_model = ProductPrice()
+        result = price_model.get_today_price_history(server_type, product_id)
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500

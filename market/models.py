@@ -17,6 +17,51 @@ class ProductPrice:
         """获取对应的数据表名"""
         return f"market_{server_type}_{product_id}"
         
+    def get_today_price_history(self, server_type: int, product_id: int):
+        """获取今日价格历史数据
+        
+        返回格式：
+        [
+            {
+                "quality": 0,
+                "price": 123.456,
+                "posted_time": "2024-01-14 10:30:00"
+            },
+            ...
+        ]
+        """
+        try:
+            # 获取今天的开始和结束时间
+            now = datetime.now()
+            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+            
+            table_name = self.get_table_name(server_type, product_id)
+            
+            # 查询今日所有有效价格数据
+            sql = f"""
+                SELECT 
+                    quality,
+                    price,
+                    posted_time
+                FROM {table_name}
+                WHERE posted_time BETWEEN %s AND %s
+                AND is_valid = 1
+                ORDER BY quality ASC, posted_time ASC
+            """
+            
+            result = self.db.fetch_all(sql, (today_start, today_end))
+            
+            # 处理数据，确保价格是浮点数
+            return [{
+                'quality': row['quality'],
+                'price': float(row['price']),
+                'posted_time': row['posted_time'].strftime('%Y-%m-%d %H:%M:%S')
+            } for row in result]
+            
+        except Exception as e:
+            raise Exception(f"获取今日价格历史数据失败: {str(e)}")
+            
     def get_today_prices(self, server_type: int, product_id: int):
         """获取当天价格数据"""
         try:
