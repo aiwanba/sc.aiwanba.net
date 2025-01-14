@@ -359,17 +359,22 @@ export default {
 
 /* 主内容区 */
 .grid-content {
-  padding: 96px 20px 20px;
-  max-width: 1400px;
+  padding: 116px 20px 20px;
+  width: 100%;
+  max-width: 1440px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .product-group {
-  margin-bottom: 20px;
+  margin: 0;
   background-color: #fff;
   border-radius: 8px;
-  padding: 12px;
+  padding: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
 }
 
 .group-header {
@@ -384,15 +389,15 @@ export default {
 
 .resources-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 8px;
-  padding: 0 10px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  padding: 0;
 }
 
 .resource-item {
   background-color: #45b97c;
   color: #fff;
-  padding: 8px;
+  padding: 10px;
   text-align: center;
   border-radius: 4px;
   cursor: pointer;
@@ -400,7 +405,11 @@ export default {
   font-weight: 500;
   font-size: 14px;
   text-decoration: none;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  word-break: break-word;
 }
 
 .resource-item:hover {
@@ -410,31 +419,113 @@ export default {
 }
 
 /* 响应式布局 */
-@media (max-width: 1200px) {
+@media (max-width: 1440px) {
+  .grid-content {
+    padding: 116px 15px 15px;
+  }
+  
   .resources-grid {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+  }
+  
+  .product-group {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .grid-content {
+    padding: 106px 12px 12px;
+  }
+
+  .resources-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
+  }
+  
+  .product-group {
+    padding: 12px;
+  }
+  
+  .group-header {
+    font-size: 15px;
+    padding: 7px 10px;
+  }
+  
+  .resource-item {
+    font-size: 13px;
+    padding: 8px;
   }
 }
 
 @media (max-width: 768px) {
-  .resources-grid {
-    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  .grid-content {
+    padding: 96px 10px 10px;
   }
+
+  .resources-grid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 6px;
+  }
+  
+  .product-group {
+    padding: 10px;
+  }
+  
+  .group-header {
+    font-size: 14px;
+    padding: 6px 8px;
+    margin-bottom: 10px;
+  }
+  
   .resource-item {
-    font-size: 13px;
+    font-size: 12px;
+    padding: 6px;
+    min-height: 36px;
   }
 }
 
 @media (max-width: 480px) {
-  .resources-grid {
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  .grid-content {
+    padding: 96px 8px 8px;
   }
+
+  .resources-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 5px;
+  }
+  
   .product-group {
     padding: 8px;
   }
+  
+  .group-header {
+    font-size: 13px;
+    padding: 5px 7px;
+    margin-bottom: 8px;
+  }
+  
   .resource-item {
-    font-size: 12px;
-    padding: 6px;
+    font-size: 11px;
+    padding: 5px;
+    min-height: 32px;
+  }
+}
+
+/* 动画效果 */
+.product-group {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

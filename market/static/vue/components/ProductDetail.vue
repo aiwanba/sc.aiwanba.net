@@ -353,10 +353,10 @@ export default {
 
 /* 主内容区 */
 .detail-content {
-  padding: 116px 0 0;
+  padding: 116px 20px 20px;
   width: 100%;
-  max-width: 100%;
-  margin: 0;
+  max-width: 1440px;
+  margin: 0 auto;
 }
 
 .menu-icon {
@@ -418,9 +418,11 @@ export default {
 }
 
 .detail-container {
-  margin: 0;
-  border-radius: 0;
-  box-shadow: none;
+  margin: 0 auto;
+  width: 100%;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 .detail-section {
@@ -514,86 +516,119 @@ export default {
 /* 左侧内容布局 */
 .detail-layout {
   display: flex;
-  gap: 0;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 20px;
 }
 
 .detail-left {
   flex: 1;
-  min-width: 300px;
-  max-width: 800px;
+  min-width: 320px;
+  max-width: 100%;
   background-color: #fff;
-  border-right: 1px solid #dcdfe6;
 }
 
 /* 小屏幕适配 */
 @media screen and (max-width: 768px) {
-  .main-content {
-    padding: 96px 0 0;
+  .detail-content {
+    padding: 96px 10px 10px;
   }
   
   .detail-layout {
     flex-direction: column;
+    gap: 10px;
+    padding: 10px;
   }
   
-  .detail-left {
-    max-width: 100%;
-    border-right: none;
-    border-bottom: 1px solid #dcdfe6;
-  }
-  
-  .section-header {
-    font-size: 16px;
+  .detail-left,
+  .detail-right {
+    flex: none;
+    width: 100%;
+    min-width: 100%;
+    border: none;
   }
   
   .detail-section {
-    padding: 15px;
+    margin-bottom: 10px;
   }
 }
 
 /* 中等屏幕适配 */
 @media screen and (min-width: 769px) and (max-width: 1200px) {
-  .main-content {
-    padding: 106px 0 0;
+  .detail-content {
+    padding: 106px 15px 15px;
+  }
+  
+  .detail-layout {
+    gap: 15px;
+    padding: 15px;
   }
   
   .detail-left {
-    flex: 0 0 350px;
+    flex: 2;
+    min-width: 300px;
+  }
+  
+  .detail-right {
+    flex: 3;
   }
 }
 
 /* 大屏幕优化 */
 @media screen and (min-width: 1201px) {
-  .main-content {
-    padding: 116px 0 0;
+  .detail-content {
+    padding: 116px 20px 20px;
   }
   
-  .detail-container {
-    margin: 0 auto;
+  .detail-layout {
+    gap: 20px;
+    padding: 20px;
   }
   
   .detail-left {
-    flex: 0 0 400px;
+    flex: 1;
+    min-width: 400px;
+    max-width: 600px;
+  }
+  
+  .detail-right {
+    flex: 2;
+    min-width: 500px;
   }
 }
 
 /* 右侧内容布局 */
 .detail-right {
   flex: 2;
-  min-width: 300px;
+  min-width: 320px;
+  max-width: 100%;
   background-color: #fff;
-  padding-left: 20px;
 }
 
 .placeholder {
-  padding: 20px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-color: #f5f5f5;
   border-radius: 4px;
-  text-align: center;
   color: #999;
 }
 
 .price-chart,
 .related-products {
   min-height: 200px;
+}
+
+/* 图表容器自适应 */
+.price-chart {
+  width: 100%;
+  min-height: 300px;
+  height: calc(100vh - 500px);
+  max-height: 600px;
+  background-color: #fff;
+  border-radius: 4px;
+  overflow: hidden;
 }
 </style>
