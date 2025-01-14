@@ -77,7 +77,9 @@
             <div class="detail-section">
               <div class="section-header">商品品质</div>
               <div class="section-content">
-                <table class="info-table">
+                <div v-if="loading" class="loading-state">加载中...</div>
+                <div v-else-if="error" class="error-state">{{ error }}</div>
+                <table v-else class="info-table">
                   <thead>
                     <tr>
                       <th class="info-header">品质等级</th>
@@ -89,112 +91,19 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td class="info-label">Q0</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value time">-</td>
-                    </tr>
-                    <tr>
-                      <td class="info-label">Q1</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value time">-</td>
-                    </tr>
-                    <tr>
-                      <td class="info-label">Q2</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value time">-</td>
-                    </tr>
-                    <tr>
-                      <td class="info-label">Q3</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value time">-</td>
-                    </tr>
-                    <tr>
-                      <td class="info-label">Q4</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value time">-</td>
-                    </tr>
-                    <tr>
-                      <td class="info-label">Q5</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value time">-</td>
-                    </tr>
-                    <tr>
-                      <td class="info-label">Q6</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value time">-</td>
-                    </tr>
-                    <tr>
-                      <td class="info-label">Q7</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value time">-</td>
-                    </tr>
-                    <tr>
-                      <td class="info-label">Q8</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value time">-</td>
-                    </tr>
-                    <tr>
-                      <td class="info-label">Q9</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value time">-</td>
-                    </tr>
-                    <tr>
-                      <td class="info-label">Q10</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value time">-</td>
-                    </tr>
-                    <tr>
-                      <td class="info-label">Q11</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value time">-</td>
-                    </tr>
-                    <tr>
-                      <td class="info-label">Q12</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value price">-</td>
-                      <td class="info-value time">-</td>
+                    <tr v-for="item in qualityData" :key="item.quality">
+                      <td class="info-label">Q{{ item.quality }}</td>
+                      <td class="info-value price">{{ item.latestPrice }}</td>
+                      <td class="info-value price">{{ item.lowestPrice }}</td>
+                      <td class="info-value price">{{ item.highestPrice }}</td>
+                      <td class="info-value price">{{ item.averagePrice }}</td>
+                      <td class="info-value time">{{ item.updateTime }}</td>
                     </tr>
                   </tbody>
                 </table>
+                <div v-if="lastUpdateTime" class="update-time">
+                  最后更新: {{ lastUpdateTime }}
+                </div>
               </div>
             </div>
           </div>
@@ -226,7 +135,11 @@ export default {
     return {
       serverType: parseInt(localStorage.getItem('serverType') || '0'),
       productId: null,
-      PRODUCT_TYPES
+      PRODUCT_TYPES,
+      qualityData: [],
+      loading: false,
+      error: null,
+      lastUpdateTime: null
     }
   },
   methods: {
@@ -242,6 +155,81 @@ export default {
         }
       }
       return '未分类';
+    },
+    async fetchQualityData() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await fetch(`/market/api/v1/market/quality/${this.serverType}/${this.productId}`);
+        if (!response.ok) {
+          throw new Error('获取数据失败');
+        }
+        const data = await response.json();
+        if (data.code === 0) {
+          this.qualityData = this.processQualityData(data.data);
+          this.lastUpdateTime = new Date().toLocaleString();
+        } else {
+          throw new Error(data.message || '获取数据失败');
+        }
+      } catch (err) {
+        this.error = err.message;
+        console.error('获取品质数据错误:', err);
+      } finally {
+        this.loading = false;
+      }
+    },
+    processQualityData(data) {
+      // 初始化所有品质等级的数据
+      const qualities = Array.from({ length: 13 }, (_, i) => ({
+        quality: i,
+        latestPrice: '-',
+        lowestPrice: '-',
+        highestPrice: '-',
+        averagePrice: '-',
+        updateTime: '-'
+      }));
+
+      // 处理返回的数据
+      data.forEach(item => {
+        if (item.quality >= 0 && item.quality <= 12) {
+          qualities[item.quality] = {
+            quality: item.quality,
+            latestPrice: this.formatPrice(item.latest_price),
+            lowestPrice: this.formatPrice(item.lowest_price),
+            highestPrice: this.formatPrice(item.highest_price),
+            averagePrice: this.formatPrice(item.average_price),
+            updateTime: this.formatTime(item.update_time)
+          };
+        }
+      });
+
+      return qualities;
+    },
+    formatPrice(price) {
+      if (!price || price === '-') return '-';
+      return new Intl.NumberFormat('zh-CN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(price);
+    },
+    formatTime(time) {
+      if (!time || time === '-') return '-';
+      return new Date(time).toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    },
+    startAutoRefresh() {
+      // 每60秒自动刷新一次数据
+      this.refreshInterval = setInterval(() => {
+        this.fetchQualityData();
+      }, 60000);
+    },
+    stopAutoRefresh() {
+      if (this.refreshInterval) {
+        clearInterval(this.refreshInterval);
+      }
     }
   },
   mounted() {
@@ -249,7 +237,12 @@ export default {
     if (pathParts.length >= 4) {
       this.serverType = parseInt(pathParts[2]);
       this.productId = parseInt(pathParts[3]);
+      this.fetchQualityData();
+      this.startAutoRefresh();
     }
+  },
+  beforeUnmount() {
+    this.stopAutoRefresh();
   }
 }
 </script>
@@ -630,5 +623,25 @@ export default {
   background-color: #fff;
   border-radius: 4px;
   overflow: hidden;
+}
+
+.loading-state,
+.error-state {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.error-state {
+  color: #dc3545;
+}
+
+.update-time {
+  margin-top: 8px;
+  text-align: right;
+  font-size: 11px;
+  color: #666;
 }
 </style>
