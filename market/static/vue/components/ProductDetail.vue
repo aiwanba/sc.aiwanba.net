@@ -75,6 +75,19 @@
               </div>
             </div>
           </div>
+
+          <!-- 右侧内容 -->
+          <div class="detail-right">
+            <!-- 价格信息 -->
+            <div class="detail-section">
+              <div class="section-header">价格信息</div>
+              <div class="section-content">
+                <div class="price-chart">
+                  <div class="placeholder">价格趋势图</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -402,5 +415,26 @@ export default {
   .detail-left {
     flex: 0 0 400px;
   }
+}
+
+/* 右侧内容布局 */
+.detail-right {
+  flex: 2;
+  min-width: 300px;
+  background-color: #fff;
+  padding-left: 20px;
+}
+
+.placeholder {
+  padding: 20px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  text-align: center;
+  color: #999;
+}
+
+.price-chart,
+.related-products {
+  min-height: 200px;
 }
 </style>
