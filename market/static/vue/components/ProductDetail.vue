@@ -116,8 +116,17 @@
               <div class="section-header">价格信息</div>
               <div class="section-content">
                 <div class="price-chart">
-                  <!-- 这里后续添加价格趋势图 -->
-                  <div class="placeholder">价格趋势图</div>
+                  <!-- 价格趋势图 -->
+                  <div id="priceChart" style="width: 100%; height: 400px;"></div>
+                  <div class="chart-legend">
+                    <div class="legend-item" v-for="quality in activeQualities" :key="quality">
+                      <span class="legend-color" :style="{ backgroundColor: getQualityColor(quality) }"></span>
+                      <span class="legend-label">Q{{ quality }}</span>
+                      <button class="legend-btn" @click="toggleQuality(quality)">
+                        {{ isQualityActive(quality) ? '隐藏' : '显示' }}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -163,6 +172,7 @@
 
 <script>
 import { PRODUCT_TYPES, PRODUCT_GROUPS } from '../config.js'
+import * as echarts from 'echarts'
 
 export default {
   name: 'ProductDetail',
@@ -171,8 +181,11 @@ export default {
       serverType: parseInt(localStorage.getItem('serverType') || '0'),
       productId: null,
       PRODUCT_TYPES,
-      // 当天价格数据
       pricesByQuality: [], // 按品质分类的价格数据
+      priceChart: null, // ECharts 实例
+      priceHistory: [], // 价格历史数据
+      activeQualities: [], // 当前显示的品质列表
+      qualityColors: {}, // 品质对应的颜色
     }
   },
   computed: {
@@ -260,6 +273,129 @@ export default {
       } catch (error) {
         this.pricesByQuality = [];
       }
+    },
+    // 初始化价格趋势图
+    initPriceChart() {
+      if (this.priceChart) {
+        this.priceChart.dispose();
+      }
+      this.priceChart = echarts.init(document.getElementById('priceChart'));
+      this.updatePriceChart();
+    },
+    // 更新价格趋势图数据
+    updatePriceChart() {
+      if (!this.priceChart || !this.priceHistory.length) return;
+
+      const series = this.activeQualities.map(quality => ({
+        name: `Q${quality}`,
+        type: 'line',
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 6,
+        data: this.getPriceDataByQuality(quality),
+        lineStyle: {
+          width: 2,
+          color: this.getQualityColor(quality)
+        },
+        itemStyle: {
+          color: this.getQualityColor(quality)
+        }
+      }));
+
+      const option = {
+        tooltip: {
+          trigger: 'axis',
+          formatter: (params) => {
+            let result = `${params[0].axisValue}<br/>`;
+            params.forEach(param => {
+              result += `${param.seriesName}: ${param.value.toFixed(3)}<br/>`;
+            });
+            return result;
+          }
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'time',
+          boundaryGap: false,
+          axisLabel: {
+            formatter: (value) => {
+              const date = new Date(value);
+              return date.getHours().toString().padStart(2, '0') + ':' +
+                     date.getMinutes().toString().padStart(2, '0');
+            }
+          }
+        },
+        yAxis: {
+          type: 'value',
+          axisLabel: {
+            formatter: '{value}'
+          }
+        },
+        series
+      };
+
+      this.priceChart.setOption(option);
+    },
+    // 获取指定品质的价格数据
+    getPriceDataByQuality(quality) {
+      return this.priceHistory
+        .filter(item => item.quality === quality)
+        .map(item => [item.posted_time, item.price]);
+    },
+    // 获取品质对应的颜色
+    getQualityColor(quality) {
+      if (!this.qualityColors[quality]) {
+        // 生成固定的颜色映射
+        const colors = [
+          '#5470c6', '#91cc75', '#fac858', '#ee6666',
+          '#73c0de', '#3ba272', '#fc8452', '#9a60b4',
+          '#ea7ccc', '#48b', '#f93', '#6b0'
+        ];
+        this.qualityColors[quality] = colors[quality % colors.length];
+      }
+      return this.qualityColors[quality];
+    },
+    // 切换品质显示状态
+    toggleQuality(quality) {
+      const index = this.activeQualities.indexOf(quality);
+      if (index > -1) {
+        this.activeQualities.splice(index, 1);
+      } else {
+        this.activeQualities.push(quality);
+      }
+      this.updatePriceChart();
+    },
+    // 判断品质是否处于激活状态
+    isQualityActive(quality) {
+      return this.activeQualities.includes(quality);
+    },
+    // 获取今日价格历史数据
+    async fetchPriceHistory() {
+      try {
+        const response = await fetch(`/market/api/prices/history/today/${this.serverType}/${this.productId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        this.priceHistory = data;
+        
+        // 提取所有不同的品质并排序
+        const qualities = [...new Set(data.map(item => item.quality))].sort((a, b) => a - b);
+        this.activeQualities = qualities;
+        
+        // 初始化图表
+        this.$nextTick(() => {
+          this.initPriceChart();
+        });
+      } catch (error) {
+        console.error('获取价格历史数据失败:', error);
+        this.priceHistory = [];
+      }
     }
   },
   mounted() {
@@ -269,6 +405,15 @@ export default {
       this.productId = parseInt(pathParts[3]);
       // 获取当天价格数据
       this.fetchTodayPrices();
+      // 获取价格历史数据
+      this.fetchPriceHistory();
+    }
+  },
+  beforeDestroy() {
+    // 销毁图表实例
+    if (this.priceChart) {
+      this.priceChart.dispose();
+      this.priceChart = null;
     }
   }
 }
@@ -805,5 +950,56 @@ export default {
 .info-table .info-value {
   color: #333;
   font-size: 12px;
+}
+
+/* 添加图表相关样式 */
+.price-chart {
+  position: relative;
+  background: #fff;
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 8px;
+  border-top: 1px solid #ebeef5;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.legend-label {
+  color: #666;
+}
+
+.legend-btn {
+  padding: 2px 6px;
+  font-size: 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 3px;
+  background: #fff;
+  color: #606266;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.legend-btn:hover {
+  color: #409eff;
+  border-color: #c6e2ff;
+  background-color: #ecf5ff;
 }
 </style> 
