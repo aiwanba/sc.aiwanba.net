@@ -5,28 +5,20 @@ import path from 'path'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
-  base: '/market/static/dist/',  // 修改为正确的基础路径
-  css: {
-    postcss: {
-      plugins: [
-        require('autoprefixer')({
-          overrideBrowserslist: ['> 1%', 'last 2 versions']
-        })
-      ]
-    }
-  },
+  base: '/market/static/',
   build: {
-    outDir: '../dist',  // 输出目录
-    assetsDir: '',      // 资源目录
-    manifest: true,     // 生成manifest.json
+    outDir: '../dist',
+    assetsDir: 'assets',
+    emptyOutDir: true,
     rollupOptions: {
-      input: './main.js',
-      output: {
-        entryFileNames: 'main.js',
-        chunkFileNames: '[name].js',
-        assetFileNames: '[name].[ext]'
+      input: {
+        main: path.resolve(__dirname, 'index.html')
       }
     }
+  },
+  server: {
+    port: 5173,
+    open: true
   },
   resolve: {
     alias: {

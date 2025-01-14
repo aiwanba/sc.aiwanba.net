@@ -38,6 +38,13 @@ logging.info(f'Current environment: {ENV}')
 # 创建Flask应用（后台管理系统）
 app = Flask(__name__)
 
+# 开发环境配置
+if ENV == 'development':
+    app.config['DEBUG'] = True  # 启用调试模式
+    app.config['TEMPLATES_AUTO_RELOAD'] = True  # 模板自动重载
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # 静态文件不缓存
+    logging.getLogger('werkzeug').setLevel(logging.DEBUG)  # 开发服务器日志级别
+
 # 注册静态文件目录
 app.static_folder = 'collector_admin/static'  # 默认静态文件目录
 
@@ -79,10 +86,16 @@ def index():
 if __name__ == '__main__':
     logging.info('启动 Flask 应用...')
     
-    # 根据环境变量决定是否使用 reloader
+    # 根据环境变量决定运行模式
     if ENV == 'development':
-        print('Running in development mode, reloader disabled')
-        app.run(host='0.0.0.0', port=5000, use_reloader=False)
+        print('Running in development mode')
+        app.run(
+            host='0.0.0.0', 
+            port=5000, 
+            use_reloader=True,  # 启用自动重载
+            debug=True,  # 启用调试模式
+            threaded=True  # 启用多线程
+        )
     else:
         print('Running in production mode')
         app.run(host='0.0.0.0', port=5000) 
