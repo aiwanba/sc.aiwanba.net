@@ -71,6 +71,10 @@
                     <td class="info-label">所属分组</td>
                     <td class="info-value">{{ getProductGroup() }}</td>
                   </tr>
+                  <tr>
+                    <td class="info-label">商品品质</td>
+                    <td class="info-value">{{ quality || '-' }}</td>
+                  </tr>
                 </table>
               </div>
             </div>
