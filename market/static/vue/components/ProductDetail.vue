@@ -56,14 +56,6 @@
               <div class="section-content">
                 <table class="info-table">
                   <tr>
-                    <td class="info-label">商品名称</td>
-                    <td class="info-value">{{ PRODUCT_TYPES[productId] || '未知商品' }}</td>
-                  </tr>
-                  <tr>
-                    <td class="info-label">商品ID</td>
-                    <td class="info-value">{{ productId }}</td>
-                  </tr>
-                  <tr>
                     <td class="info-label">服务器</td>
                     <td class="info-value">{{ serverType === 0 ? '商业大亨' : '企业家' }}</td>
                   </tr>
@@ -72,8 +64,73 @@
                     <td class="info-value">{{ getProductGroup() }}</td>
                   </tr>
                   <tr>
-                    <td class="info-label">商品品质</td>
-                    <td class="info-value">{{ quality || '-' }}</td>
+                    <td class="info-label">商品名称</td>
+                    <td class="info-value">{{ PRODUCT_TYPES[productId] || '未知商品' }}</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">商品ID</td>
+                    <td class="info-value">{{ productId }}</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <!-- 商品品质 -->
+            <div class="detail-section">
+              <div class="section-header">商品品质</div>
+              <div class="section-content">
+                <table class="info-table">
+                  <tr>
+                    <td class="info-label">Q0</td>
+                    <td class="info-value">-</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">Q1</td>
+                    <td class="info-value">-</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">Q2</td>
+                    <td class="info-value">-</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">Q3</td>
+                    <td class="info-value">-</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">Q4</td>
+                    <td class="info-value">-</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">Q5</td>
+                    <td class="info-value">-</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">Q6</td>
+                    <td class="info-value">-</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">Q7</td>
+                    <td class="info-value">-</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">Q8</td>
+                    <td class="info-value">-</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">Q9</td>
+                    <td class="info-value">-</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">Q10</td>
+                    <td class="info-value">-</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">Q11</td>
+                    <td class="info-value">-</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">Q12</td>
+                    <td class="info-value">-</td>
                   </tr>
                 </table>
               </div>
