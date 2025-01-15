@@ -104,7 +104,7 @@ export default {
             axisPointer: {
               type: 'cross',
               animation: false,
-              snap: true,
+              snap: false,
               crossStyle: {
                 color: '#45b97c',
                 width: 1,
@@ -193,7 +193,9 @@ export default {
                 label: {
                   show: true,
                   formatter: function (params) {
-                    return new Date(params.value).toLocaleTimeString('zh-CN', {
+                    return new Date(params.value).toLocaleString('zh-CN', {
+                      month: '2-digit',
+                      day: '2-digit',
                       hour: '2-digit',
                       minute: '2-digit',
                       hour12: false
@@ -245,8 +247,9 @@ export default {
               },
               axisPointer: {
                 show: true,
-                snap: true,
-                triggerTooltip: true,
+                snap: false,
+                triggerTooltip: false,
+                status: true,
                 label: {
                   show: true,
                   formatter: (params) => this.formatPrice(params.value),
@@ -276,8 +279,9 @@ export default {
               },
               axisPointer: {
                 show: true,
-                snap: true,
-                triggerTooltip: true,
+                snap: false,
+                triggerTooltip: false,
+                status: true,
                 label: {
                   show: true,
                   formatter: (params) => params.value.toLocaleString(),
@@ -334,7 +338,7 @@ export default {
               connectNulls: false,
               label: {
                 show: true,
-                position: 'top',
+                position: 'right',
                 distance: 10,
                 formatter: (params) => this.formatPrice(params.value[1]),
                 color: '#45b97c',
@@ -343,8 +347,7 @@ export default {
                 padding: [4, 8],
                 borderRadius: 4,
                 borderColor: '#45b97c',
-                borderWidth: 1,
-                show: false
+                borderWidth: 1
               },
               emphasis: {
                 scale: true,
@@ -397,12 +400,17 @@ export default {
               barWidth: '70%',
               barGap: '0%',
               label: {
-                show: false,
-                position: 'top',
-                distance: 4,
-                color: '#666',
-                fontSize: 11,
-                formatter: (params) => params.value[1].toLocaleString()
+                show: true,
+                position: 'right',
+                distance: 10,
+                formatter: (params) => params.value[1].toLocaleString(),
+                color: '#45b97c',
+                fontSize: 12,
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                padding: [4, 8],
+                borderRadius: 4,
+                borderColor: '#45b97c',
+                borderWidth: 1
               },
               emphasis: {
                 itemStyle: {
