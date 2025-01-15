@@ -694,8 +694,17 @@ export default {
 .detail-content {
   padding: 116px 20px 20px;
   width: 100%;
-  max-width: 1440px;
+  max-width: 100%;
   margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.detail-container {
+  margin: 0 auto;
+  width: 100%;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 .menu-icon {
@@ -754,14 +763,6 @@ export default {
 .slide-fade-leave-from {
   transform: translateX(0);
   opacity: 1;
-}
-
-.detail-container {
-  margin: 0 auto;
-  width: 100%;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 .detail-section {
@@ -858,6 +859,8 @@ export default {
   flex-wrap: wrap;
   gap: 20px;
   padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .detail-left {
@@ -884,11 +887,10 @@ export default {
     flex: none;
     width: 100%;
     min-width: 100%;
-    border: none;
   }
   
-  .detail-section {
-    margin-bottom: 10px;
+  .price-chart {
+    height: 300px;
   }
 }
 
@@ -904,12 +906,18 @@ export default {
   }
   
   .detail-left {
-    flex: 2;
-    min-width: 300px;
+    flex: 1;
+    min-width: 320px;
+    max-width: 400px;
   }
   
   .detail-right {
-    flex: 3;
+    flex: 2;
+    min-width: 400px;
+  }
+  
+  .price-chart {
+    height: 400px;
   }
 }
 
@@ -927,12 +935,16 @@ export default {
   .detail-left {
     flex: 1;
     min-width: 400px;
-    max-width: 600px;
+    max-width: 500px;
   }
   
   .detail-right {
     flex: 2;
-    min-width: 500px;
+    min-width: 600px;
+  }
+  
+  .price-chart {
+    height: 500px;
   }
 }
 
