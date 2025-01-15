@@ -104,15 +104,16 @@ export default {
             axisPointer: {
               type: 'cross',
               animation: false,
-              snap: false,
+              snap: true,
               crossStyle: {
                 color: '#45b97c',
                 width: 1,
                 type: 'dashed'
               },
-              link: [{
-                xAxisIndex: 'all'
-              }]
+              label: {
+                show: true,
+                precision: 3
+              }
             },
             triggerOn: 'mousemove',
             showDelay: 0,
@@ -131,46 +132,18 @@ export default {
               const obj = {top: 10};
               obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 60;
               return obj;
-            },
-            formatter: (params) => {
-              const date = new Date(params[0].data[0]);
-              let res = `<div style="font-weight: bold; margin-bottom: 4px;">${date.toLocaleString('zh-CN', {
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-              })}</div>`;
-              
-              params.forEach(param => {
-                const color = param.color || '#45b97c';
-                if (param.seriesName === '成交量') {
-                  res += `<div style="display: flex; justify-content: space-between; align-items: center; margin: 2px 0;">
-                    <span style="color: ${color};">●</span>
-                    <span style="margin-right: 12px;">${param.seriesName}:</span>
-                    <span style="font-family: Monaco, monospace;">${param.data[1].toLocaleString()}</span>
-                  </div>`;
-                } else {
-                  res += `<div style="display: flex; justify-content: space-between; align-items: center; margin: 2px 0;">
-                    <span style="color: ${color};">●</span>
-                    <span style="margin-right: 12px;">${param.seriesName}:</span>
-                    <span style="font-family: Monaco, monospace; font-weight: bold;">${this.formatPrice(param.data[1])}</span>
-                  </div>`;
-                }
-              });
-              return res;
             }
           },
           grid: [{
             left: 80,
             right: 60,
             top: 40,
-            height: '50%'
+            height: '45%'
           }, {
             left: 80,
             right: 60,
-            top: '65%',
-            height: '25%'
+            top: '60%',
+            height: '30%'
           }],
           axisPointer: {
             link: [{
@@ -271,13 +244,15 @@ export default {
                 formatter: (value) => this.formatPrice(value)
               },
               axisPointer: {
-                snap: false,
+                show: true,
+                snap: true,
+                triggerTooltip: true,
                 label: {
                   show: true,
-                  formatter: function (params) {
-                    return params.value.toFixed(3);
-                  },
-                  backgroundColor: '#45b97c'
+                  formatter: (params) => this.formatPrice(params.value),
+                  padding: [4, 8],
+                  backgroundColor: 'rgba(69, 185, 124, 0.9)',
+                  color: '#fff'
                 }
               }
             },
@@ -298,6 +273,18 @@ export default {
                 color: '#999',
                 fontSize: 11,
                 formatter: (value) => value.toLocaleString()
+              },
+              axisPointer: {
+                show: true,
+                snap: true,
+                triggerTooltip: true,
+                label: {
+                  show: true,
+                  formatter: (params) => params.value.toLocaleString(),
+                  padding: [4, 8],
+                  backgroundColor: 'rgba(69, 185, 124, 0.9)',
+                  color: '#fff'
+                }
               }
             }
           ],
@@ -346,7 +333,7 @@ export default {
               sampling: 'none',
               connectNulls: false,
               label: {
-                show: false,
+                show: true,
                 position: 'top',
                 distance: 10,
                 formatter: (params) => this.formatPrice(params.value[1]),
@@ -356,7 +343,8 @@ export default {
                 padding: [4, 8],
                 borderRadius: 4,
                 borderColor: '#45b97c',
-                borderWidth: 1
+                borderWidth: 1,
+                show: false
               },
               emphasis: {
                 scale: true,
@@ -364,6 +352,7 @@ export default {
                 blurScope: 'coordinateSystem',
                 label: {
                   show: true,
+                  position: 'top',
                   formatter: (params) => this.formatPrice(params.value[1]),
                   color: '#45b97c',
                   fontSize: 12,
@@ -372,13 +361,6 @@ export default {
                   borderRadius: 4,
                   borderColor: '#45b97c',
                   borderWidth: 1
-                },
-                itemStyle: {
-                  symbolSize: 8,
-                  borderWidth: 2,
-                  borderColor: '#fff',
-                  shadowBlur: 10,
-                  shadowColor: 'rgba(69, 185, 124, 0.3)'
                 }
               },
               lineStyle: { 
@@ -407,12 +389,40 @@ export default {
               data: data.map(item => [item.time, item.volume]),
               itemStyle: {
                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                  { offset: 0, color: 'rgba(69, 185, 124, 0.3)' },
-                  { offset: 1, color: 'rgba(69, 185, 124, 0.1)' }
-                ])
+                  { offset: 0, color: 'rgba(69, 185, 124, 0.8)' },
+                  { offset: 1, color: 'rgba(69, 185, 124, 0.3)' }
+                ]),
+                borderRadius: [3, 3, 0, 0]
               },
-              barWidth: '60%',
-              barGap: '0%'
+              barWidth: '70%',
+              barGap: '0%',
+              label: {
+                show: false,
+                position: 'top',
+                distance: 4,
+                color: '#666',
+                fontSize: 11,
+                formatter: (params) => params.value[1].toLocaleString()
+              },
+              emphasis: {
+                itemStyle: {
+                  color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: 'rgba(69, 185, 124, 0.9)' },
+                    { offset: 1, color: 'rgba(69, 185, 124, 0.4)' }
+                  ])
+                },
+                label: {
+                  show: true,
+                  position: 'top',
+                  distance: 4,
+                  color: '#45b97c',
+                  fontSize: 11,
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  padding: [2, 4],
+                  borderRadius: 2,
+                  formatter: (params) => params.value[1].toLocaleString()
+                }
+              }
             }
           ]
         };
