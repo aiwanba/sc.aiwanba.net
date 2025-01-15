@@ -387,6 +387,7 @@ export default {
           left: 60,
           right: 60,
           top: 30,
+          bottom: 100,
           height: '60%'
         }, {
           left: 60,
@@ -405,18 +406,7 @@ export default {
               type: 'dashed'
             }
           },
-          axisLabel: {
-            formatter: (value) => {
-              const date = new Date(value);
-              if (this.currentPeriod === '1h') {
-                return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-              } else if (this.currentPeriod === '1d') {
-                return date.toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-              } else {
-                return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
-              }
-            }
-          }
+          axisLabel: { show: false }
         }, {
           type: 'time',
           gridIndex: 1,
