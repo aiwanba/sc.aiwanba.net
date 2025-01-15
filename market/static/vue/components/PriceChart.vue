@@ -1,3 +1,4 @@
+// @ts-nocheck
 <template>
   <div class="detail-section">
     <div class="section-header">商品价格信息</div>
@@ -104,46 +105,36 @@ export default {
             axisPointer: {
               type: 'cross',
               animation: false,
-              snap: false,
+              snap: true,
               crossStyle: {
-                color: '#45b97c',
+                color: '#ff7f50',
                 width: 1,
                 type: 'dashed'
+              },
+              label: {
+                show: true,
+                backgroundColor: '#ff7f50',
+                color: '#fff',
+                formatter: function (params) {
+                  if (params.axisDimension === 'y') {
+                    return '';  // 横线不显示标签
+                  }
+                  // 竖线上显示标签
+                  if (params.axisIndex === 0) {
+                    return `价格 Q0 ${Number(params.value).toFixed(3)}`;
+                  }
+                  if (params.axisIndex === 1) {
+                    return `成交量: ${Number(params.value).toLocaleString()}`;
+                  }
+                  return '';
+                }
               }
-            },
-            position: function (pos, params, el, elRect, size) {
-              const obj = { top: 10 };
-              obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 30;
-              return obj;
-            },
-            formatter: (params) => {
-              const date = new Date(params[0].data[0]);
-              let res = `<div style="font-weight: bold; margin-bottom: 8px;">
-                ${date.toLocaleString('zh-CN', {
-                  month: '2-digit',
-                  day: '2-digit',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: false
-                })}
-              </div>`;
-              
-              params.forEach(param => {
-                const color = param.color || '#45b97c';
-                const value = param.seriesName === '价格' 
-                  ? this.formatPrice(param.data[1])
-                  : param.data[1].toLocaleString();
-                
-                res += `<div style="display: flex; justify-content: space-between; align-items: center; margin: 4px 0;">
-                  <span style="color: ${color};">●</span>
-                  <span style="margin: 0 12px;">${param.seriesName}:</span>
-                  <span style="font-family: Monaco, monospace; font-weight: ${param.seriesName === '价格' ? 'bold' : 'normal'};">
-                    ${value}
-                  </span>
-                </div>`;
-              });
-              return res;
             }
+          },
+          axisPointer: {
+            link: [{
+              xAxisIndex: 'all'
+            }]
           },
           grid: [{
             left: 80,
@@ -156,11 +147,6 @@ export default {
             top: '60%',
             height: '30%'
           }],
-          axisPointer: {
-            link: [{
-              xAxisIndex: 'all'
-            }]
-          },
           xAxis: [
             {
               type: 'time',
@@ -196,23 +182,9 @@ export default {
                 }
               },
               axisPointer: {
-                snap: false,
-                lineStyle: {
-                  color: '#45b97c',
-                  width: 1
-                },
+                show: true,
                 label: {
-                  show: true,
-                  formatter: function (params) {
-                    return new Date(params.value).toLocaleString('zh-CN', {
-                      month: '2-digit',
-                      day: '2-digit',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: false
-                    });
-                  },
-                  backgroundColor: '#45b97c'
+                  show: false
                 }
               }
             },
@@ -229,7 +201,13 @@ export default {
               },
               axisTick: { show: false },
               axisLabel: { show: false },
-              splitLine: { show: false }
+              splitLine: { show: false },
+              axisPointer: {
+                show: true,
+                label: {
+                  show: false
+                }
+              }
             }
           ],
           yAxis: [
@@ -259,10 +237,7 @@ export default {
               axisPointer: {
                 show: true,
                 label: {
-                  show: true,
-                  precision: 3,
-                  formatter: '{value}',
-                  backgroundColor: '#45b97c'
+                  show: false
                 }
               }
             },
@@ -287,9 +262,7 @@ export default {
               axisPointer: {
                 show: true,
                 label: {
-                  show: true,
-                  formatter: '{value}',
-                  backgroundColor: '#45b97c'
+                  show: false
                 }
               }
             }
@@ -348,20 +321,14 @@ export default {
               },
               lineStyle: { 
                 width: 2,
-                color: '#45b97c'
+                color: '#ff7f50'
               },
               itemStyle: { 
-                color: '#45b97c',
+                color: '#ff7f50',
                 borderWidth: 2,
                 borderColor: '#fff',
                 shadowBlur: 4,
                 shadowColor: 'rgba(0, 0, 0, 0.1)'
-              },
-              areaStyle: {
-                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                  { offset: 0, color: 'rgba(69, 185, 124, 0.2)' },
-                  { offset: 1, color: 'rgba(69, 185, 124, 0)' }
-                ])
               }
             },
             {
@@ -370,18 +337,18 @@ export default {
               xAxisIndex: 1,
               yAxisIndex: 1,
               data: data.map(item => [item.time, item.volume]),
+              label: {
+                show: false
+              },
               itemStyle: {
                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                  { offset: 0, color: 'rgba(69, 185, 124, 0.8)' },
-                  { offset: 1, color: 'rgba(69, 185, 124, 0.3)' }
+                  { offset: 0, color: 'rgba(128, 128, 128, 0.8)' },
+                  { offset: 1, color: 'rgba(128, 128, 128, 0.3)' }
                 ]),
                 borderRadius: [3, 3, 0, 0]
               },
               barWidth: '70%',
-              barGap: '0%',
-              label: {
-                show: false
-              }
+              barGap: '0%'
             }
           ]
         };
