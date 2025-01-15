@@ -74,50 +74,10 @@
             </div>
 
             <!-- 商品品质信息-->
-            <div class="detail-section">
-              <div class="section-header">商品品质信息</div>
-              <div class="section-content">
-                <div v-if="loading" class="loading-state">加载中...</div>
-                <div v-if="error" class="error-state">{{ error }}</div>
-                <table class="info-table">
-                  <thead>
-                    <tr>
-                      <th class="info-header">品质等级</th>
-                      <th class="info-header">最新价格</th>
-                      <th class="info-header">最低价格</th>
-                      <th class="info-header">最高价格</th>
-                      <th class="info-header">平均价格</th>
-                      <th class="info-header">更新时间</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <template v-if="qualityData && qualityData.length > 0">
-                      <tr v-for="item in qualityData" :key="item.quality">
-                        <td class="info-label">Q{{ item.quality }}</td>
-                        <td class="info-value price">{{ item.latestPrice || '-' }}</td>
-                        <td class="info-value price">{{ item.lowestPrice || '-' }}</td>
-                        <td class="info-value price">{{ item.highestPrice || '-' }}</td>
-                        <td class="info-value price">{{ item.averagePrice || '-' }}</td>
-                        <td class="info-value time">{{ item.updateTime || '-' }}</td>
-                      </tr>
-                    </template>
-                    <template v-else>
-                      <tr v-for="i in 13" :key="i-1">
-                        <td class="info-label">Q{{ i-1 }}</td>
-                        <td class="info-value price">-</td>
-                        <td class="info-value price">-</td>
-                        <td class="info-value price">-</td>
-                        <td class="info-value price">-</td>
-                        <td class="info-value time">-</td>
-                      </tr>
-                    </template>
-                  </tbody>
-                </table>
-                <div v-if="lastUpdateTime" class="update-time">
-                  最后更新: {{ lastUpdateTime }}
-                </div>
-              </div>
-            </div>
+            <quality-info 
+              :server-type="serverType"
+              :product-id="productId"
+            />
           </div>
           <!-- 右侧内容 -->
           <div class="detail-right">
@@ -136,21 +96,19 @@
 <script>
 import { PRODUCT_TYPES, PRODUCT_GROUPS } from '../config.js'
 import PriceChart from './PriceChart.vue'
+import QualityInfo from './QualityInfo.vue'
 
 export default {
   name: 'ProductDetail',
   components: {
-    PriceChart
+    PriceChart,
+    QualityInfo
   },
   data() {
     return {
       serverType: parseInt(localStorage.getItem('serverType') || '0'),
       productId: null,
-      PRODUCT_TYPES,
-      qualityData: [],
-      loading: false,
-      error: null,
-      lastUpdateTime: null
+      PRODUCT_TYPES
     }
   },
   methods: {
@@ -166,137 +124,6 @@ export default {
         }
       }
       return '未分类';
-    },
-    async fetchQualityData() {
-      this.loading = true;
-      this.error = null;
-      try {
-        console.log('Fetching data for server:', this.serverType, 'product:', this.productId);
-        const response = await fetch(`/market/api/v1/market/quality/${this.serverType}/${this.productId}`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        console.log('Response status:', response.status);
-        const contentType = response.headers.get('content-type');
-        console.log('Response content-type:', contentType);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Error response:', errorText);
-          throw new Error(`获取数据失败: ${response.status} ${errorText}`);
-        }
-
-        const data = await response.json();
-        console.log('Received data:', data);
-        
-        if (data.code === 0) {
-          this.qualityData = this.processQualityData(data.data);
-          this.lastUpdateTime = new Date().toLocaleString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-          });
-        } else {
-          throw new Error(data.message || '获取数据失败');
-        }
-      } catch (err) {
-        console.error('Error details:', err);
-        this.error = err.message;
-      } finally {
-        this.loading = false;
-      }
-    },
-    processQualityData(data) {
-      // 初始化所有品质等级的数据
-      const qualities = Array.from({ length: 13 }, (_, i) => ({
-        quality: i,
-        latestPrice: '-',
-        lowestPrice: '-',
-        highestPrice: '-',
-        averagePrice: '-',
-        updateTime: '-'
-      }));
-
-      // 处理返回的数据
-      data.forEach(item => {
-        if (item.quality >= 0 && item.quality <= 12) {
-          qualities[item.quality] = {
-            quality: item.quality,
-            latestPrice: this.formatPrice(item.latest_price),
-            lowestPrice: this.formatPrice(item.lowest_price),
-            highestPrice: this.formatPrice(item.highest_price),
-            averagePrice: this.formatPrice(item.average_price),
-            updateTime: this.formatTime(item.update_time)
-          };
-        }
-      });
-
-      return qualities;
-    },
-    formatPrice(price) {
-      if (!price || price === '-') return '-';
-      return new Intl.NumberFormat('zh-CN', {
-        minimumFractionDigits: 3,
-        maximumFractionDigits: 3
-      }).format(price);
-    },
-    formatTime(time) {
-      if (!time || time === '-') return '-';
-      return this.getRelativeTime(new Date(time));
-    },
-    getRelativeTime(date) {
-      const now = new Date();
-      const diffInSeconds = Math.floor((now - date) / 1000);
-      
-      if (diffInSeconds < 60) {
-        if (diffInSeconds < 10) {
-          return '几秒前';
-        }
-        return `${Math.floor(diffInSeconds / 10) * 10}秒前`;
-      }
-      
-      const diffInMinutes = Math.floor(diffInSeconds / 60);
-      if (diffInMinutes < 60) {
-        return `${diffInMinutes}分钟前`;
-      }
-      
-      const diffInHours = Math.floor(diffInMinutes / 60);
-      if (diffInHours < 24) {
-        return `${diffInHours}小时前`;
-      }
-      
-      const diffInDays = Math.floor(diffInHours / 24);
-      if (diffInDays < 30) {
-        return `${diffInDays}天前`;
-      }
-      
-      // 如果超过30天，显示具体日期
-      return date.toLocaleString('zh-CN', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      });
-    },
-    startAutoRefresh() {
-      // 每60秒自动刷新一次数据
-      this.refreshInterval = setInterval(() => {
-        this.fetchQualityData();
-      }, 60000);
-    },
-    stopAutoRefresh() {
-      if (this.refreshInterval) {
-        clearInterval(this.refreshInterval);
-      }
     }
   },
   mounted() {
@@ -304,12 +131,7 @@ export default {
     if (pathParts.length >= 4) {
       this.serverType = parseInt(pathParts[2]);
       this.productId = parseInt(pathParts[3]);
-      this.fetchQualityData();
-      this.startAutoRefresh();
     }
-  },
-  beforeUnmount() {
-    this.stopAutoRefresh();
   }
 }
 </script>
