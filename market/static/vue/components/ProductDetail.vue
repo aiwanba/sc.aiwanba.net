@@ -127,13 +127,36 @@
               <div class="section-content">
                 <!-- 图表控制器 -->
                 <div class="chart-controls">
+                  <!-- 品质等级选择 -->
+                  <div class="quality-selector">
+                    <button 
+                      v-for="q in qualities" 
+                      :key="q.value"
+                      :class="[
+                        'quality-btn', 
+                        { 
+                          'active': currentQuality === q.value,
+                          'disabled': q.value > 0 && !q.isActivated
+                        }
+                      ]"
+                      @click="handleQualityClick(q)"
+                    >
+                      {{ q.label }}
+                    </button>
+                  </div>
                   <!-- 时间周期选择 -->
                   <div class="time-selector">
                     <button 
                       v-for="period in timePeriods" 
                       :key="period.value"
-                      :class="['time-btn', { active: currentPeriod === period.value }]"
-                      @click="changePeriod(period.value)"
+                      :class="[
+                        'time-btn', 
+                        { 
+                          'active': currentPeriod === period.value,
+                          'disabled': period.value !== '1d' && !period.isActivated
+                        }
+                      ]"
+                      @click="handlePeriodClick(period)"
                     >
                       {{ period.label }}
                     </button>
@@ -143,8 +166,14 @@
                     <button 
                       v-for="type in chartTypes" 
                       :key="type.value"
-                      :class="['chart-type-btn', { active: currentChartType === type.value }]"
-                      @click="changeChartType(type.value)"
+                      :class="[
+                        'chart-type-btn', 
+                        { 
+                          'active': currentChartType === type.value,
+                          'disabled': type.value !== 'line' && !type.isActivated
+                        }
+                      ]"
+                      @click="handleChartTypeClick(type)"
                     >
                       {{ type.label }}
                     </button>
@@ -179,15 +208,21 @@ export default {
       // 图表相关数据
       currentPeriod: '1d',
       currentChartType: 'line',
+      currentQuality: 0, // 当前选中的品质等级
       chart: null,
+      qualities: Array.from({ length: 13 }, (_, i) => ({
+        label: `Q${i}`,
+        value: i,
+        isActivated: i === 0 // 只有Q0默认激活
+      })),
       timePeriods: [
-        { label: '1小时', value: '1h' },
-        { label: '1天', value: '1d' },
-        { label: '1个月', value: '1m' }
+        { label: '1小时', value: '1h', isActivated: false },
+        { label: '1天', value: '1d', isActivated: true },
+        { label: '1个月', value: '1m', isActivated: false }
       ],
       chartTypes: [
-        { label: '蜡烛图', value: 'candlestick' },
-        { label: '折线图', value: 'line' }
+        { label: '蜡烛图', value: 'candlestick', isActivated: false },
+        { label: '折线图', value: 'line', isActivated: true }
       ]
     }
   },
@@ -555,14 +590,18 @@ export default {
       const interval = this.currentPeriod === '1h' ? 60000 : 
                       this.currentPeriod === '1d' ? 3600000 : 86400000;
 
+      // 根据品质等级调整基准价格
+      const basePrice = 0.26 * (1 + this.currentQuality * 0.1); // 品质越高，价格越高
+
       for (let i = 0; i < count; i++) {
-        const basePrice = 0.26;
         const randomFactor = 0.01;
         const open = basePrice + (Math.random() - 0.5) * randomFactor;
         const close = basePrice + (Math.random() - 0.5) * randomFactor;
         const low = Math.min(open, close) - Math.random() * 0.005;
         const high = Math.max(open, close) + Math.random() * 0.005;
-        const volume = Math.floor(Math.random() * 50000) + 10000; // 添加成交量数据
+        // 根据品质调整成交量，品质越高成交量越少
+        const volumeBase = 50000 / (1 + this.currentQuality * 0.2);
+        const volume = Math.floor(Math.random() * volumeBase) + 10000;
         
         data.unshift([
           time.getTime(),
@@ -570,7 +609,7 @@ export default {
           high,
           low,
           close,
-          volume // 添加成交量
+          volume
         ]);
         
         time = new Date(time.getTime() - interval);
@@ -581,6 +620,42 @@ export default {
     handleResize() {
       if (this.chart) {
         this.chart.resize();
+      }
+    },
+    // 品质切换方法
+    handleQualityClick(quality) {
+      if (quality.value === 0 || quality.isActivated) {
+        this.currentQuality = quality.value;
+        this.updateChart();
+      } else {
+        // 激活该品质等级
+        quality.isActivated = true;
+        this.currentQuality = quality.value;
+        this.updateChart();
+      }
+    },
+    // 时间周期切换方法
+    handlePeriodClick(period) {
+      if (period.value === '1d' || period.isActivated) {
+        this.currentPeriod = period.value;
+        this.updateChart();
+      } else {
+        // 激活该时间周期
+        period.isActivated = true;
+        this.currentPeriod = period.value;
+        this.updateChart();
+      }
+    },
+    // 图表类型切换方法
+    handleChartTypeClick(type) {
+      if (type.value === 'line' || type.isActivated) {
+        this.currentChartType = type.value;
+        this.updateChart();
+      } else {
+        // 激活该图表类型
+        type.isActivated = true;
+        this.currentChartType = type.value;
+        this.updateChart();
       }
     }
   },
@@ -1018,14 +1093,14 @@ export default {
   border-radius: 4px;
 }
 
-.time-selector,
-.chart-type-selector {
+.quality-selector {
   display: flex;
   gap: 4px;
+  margin-right: 20px;
+  flex-wrap: wrap;
 }
 
-.time-btn,
-.chart-type-btn {
+.quality-btn {
   padding: 4px 8px;
   border: 1px solid #ddd;
   background-color: #fff;
@@ -1036,16 +1111,21 @@ export default {
   transition: all 0.2s;
 }
 
-.time-btn:hover,
-.chart-type-btn:hover {
+.quality-btn:hover:not(.disabled) {
   background-color: #f0f0f0;
 }
 
-.time-btn.active,
-.chart-type-btn.active {
+.quality-btn.active {
   background-color: #45b97c;
   color: #fff;
   border-color: #45b97c;
+}
+
+.quality-btn.disabled {
+  background-color: #f5f5f5;
+  color: #999;
+  cursor: pointer;
+  border-color: #ddd;
 }
 
 /* 图表容器样式 */
@@ -1077,5 +1157,44 @@ export default {
   .price-chart {
     height: 500px;
   }
+}
+
+/* 时间周期和图表类型选择器样式 */
+.time-selector,
+.chart-type-selector {
+  display: flex;
+  gap: 4px;
+}
+
+.time-btn,
+.chart-type-btn {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  color: #666;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.time-btn:hover:not(.disabled),
+.chart-type-btn:hover:not(.disabled) {
+  background-color: #f0f0f0;
+}
+
+.time-btn.active,
+.chart-type-btn.active {
+  background-color: #45b97c;
+  color: #fff;
+  border-color: #45b97c;
+}
+
+.time-btn.disabled,
+.chart-type-btn.disabled {
+  background-color: #f5f5f5;
+  color: #999;
+  cursor: pointer;
+  border-color: #ddd;
 }
 </style>
