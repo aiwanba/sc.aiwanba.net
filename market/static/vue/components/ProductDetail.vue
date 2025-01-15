@@ -366,6 +366,7 @@ export default {
         const data = await this.fetchHistoryData();
         
         const option = {
+          backgroundColor: '#fff',
           animation: false,
           tooltip: {
             trigger: 'axis',
@@ -373,24 +374,44 @@ export default {
               type: 'cross',
               snap: true,
               label: {
-                backgroundColor: '#777'
+                backgroundColor: '#45b97c'
+              },
+              crossStyle: {
+                color: '#45b97c'
               }
             },
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderColor: '#eee',
+            borderWidth: 1,
+            textStyle: {
+              color: '#333',
+              fontSize: 12
+            },
+            padding: [8, 12],
             formatter: (params) => {
               const date = new Date(params[0].data[0]);
-              let res = date.toLocaleString('zh-CN', {
+              let res = `<div style="font-weight: bold; margin-bottom: 4px;">${date.toLocaleString('zh-CN', {
                 month: '2-digit',
                 day: '2-digit',
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: false
-              }) + '<br/>';
+              })}</div>`;
               
               params.forEach(param => {
+                const color = param.color || '#45b97c';
                 if (param.seriesName === '成交量') {
-                  res += `${param.seriesName}: ${param.data[1].toLocaleString()}<br/>`;
+                  res += `<div style="display: flex; justify-content: space-between; align-items: center; margin: 2px 0;">
+                    <span style="color: ${color};">●</span>
+                    <span style="margin-right: 12px;">${param.seriesName}:</span>
+                    <span style="font-family: Monaco, monospace;">${param.data[1].toLocaleString()}</span>
+                  </div>`;
                 } else {
-                  res += `${param.seriesName}: ${this.formatPrice(param.data[1])}<br/>`;
+                  res += `<div style="display: flex; justify-content: space-between; align-items: center; margin: 2px 0;">
+                    <span style="color: ${color};">●</span>
+                    <span style="margin-right: 12px;">${param.seriesName}:</span>
+                    <span style="font-family: Monaco, monospace;">${this.formatPrice(param.data[1])}</span>
+                  </div>`;
                 }
               });
               return res;
@@ -403,30 +424,39 @@ export default {
             {
               left: 80,
               right: 60,
-              top: 30,
-              height: '60%'
+              top: 40,
+              height: '58%'
             },
             {
               left: 80,
               right: 60,
               top: '75%',
-              height: '20%'
+              height: '15%'
             }
           ],
           xAxis: [
             {
               type: 'time',
               boundaryGap: false,
-              axisLine: { lineStyle: { color: '#999' } },
+              axisLine: { 
+                show: true,
+                lineStyle: { 
+                  color: '#ddd',
+                  width: 1
+                }
+              },
               splitLine: {
                 show: true,
                 lineStyle: {
-                  color: '#eee',
-                  type: 'dashed'
+                  color: '#f5f5f5',
+                  width: 1,
+                  type: 'solid'
                 }
               },
               axisLabel: {
                 show: true,
+                color: '#999',
+                fontSize: 11,
                 formatter: (value) => {
                   const date = new Date(value);
                   if (this.currentPeriod === '1h') {
@@ -443,7 +473,13 @@ export default {
               type: 'time',
               gridIndex: 1,
               boundaryGap: false,
-              axisLine: { lineStyle: { color: '#999' } },
+              axisLine: { 
+                show: true,
+                lineStyle: { 
+                  color: '#ddd',
+                  width: 1
+                }
+              },
               axisTick: { show: false },
               axisLabel: { show: false },
               splitLine: { show: false }
@@ -453,12 +489,24 @@ export default {
             {
               scale: true,
               position: 'left',
-              axisLine: { lineStyle: { color: '#999' } },
+              axisLine: { 
+                show: true,
+                lineStyle: { 
+                  color: '#ddd',
+                  width: 1
+                }
+              },
               splitLine: { 
                 show: true, 
-                lineStyle: { color: '#eee' } 
+                lineStyle: { 
+                  color: '#f5f5f5',
+                  width: 1,
+                  type: 'solid'
+                }
               },
               axisLabel: {
+                color: '#999',
+                fontSize: 11,
                 formatter: (value) => this.formatPrice(value)
               }
             },
@@ -466,10 +514,18 @@ export default {
               scale: true,
               gridIndex: 1,
               position: 'left',
-              axisLine: { lineStyle: { color: '#999' } },
+              axisLine: { 
+                show: true,
+                lineStyle: { 
+                  color: '#ddd',
+                  width: 1
+                }
+              },
               axisTick: { show: false },
               splitLine: { show: false },
               axisLabel: {
+                color: '#999',
+                fontSize: 11,
                 formatter: (value) => value.toLocaleString()
               }
             }
@@ -479,16 +535,31 @@ export default {
               type: 'inside',
               xAxisIndex: [0, 1],
               start: 0,
-              end: 100
+              end: 100,
+              minValueSpan: 3600 * 1000 * 1, // 最小1小时
+              maxValueSpan: 3600 * 1000 * 24 * 30 // 最大30天
             },
             {
               show: true,
               xAxisIndex: [0, 1],
               type: 'slider',
-              bottom: 10,
+              bottom: 8,
               start: 0,
               end: 100,
-              height: 20
+              height: 20,
+              borderColor: 'transparent',
+              backgroundColor: '#f8f9fa',
+              fillerColor: 'rgba(69, 185, 124, 0.1)',
+              handleIcon: 'path://M-9.35,34.56V42m0-40V9.5m-2,0h4a2,2,0,0,1,2,2v21a2,2,0,0,1-2,2h-4a2,2,0,0,1-2-2v-21A2,2,0,0,1-11.35,9.5Z',
+              handleSize: '120%',
+              handleStyle: {
+                color: '#45b97c',
+                borderColor: '#45b97c'
+              },
+              textStyle: {
+                color: '#999',
+                fontSize: 11
+              }
             }
           ],
           series: [
@@ -497,9 +568,23 @@ export default {
               type: 'line',
               data: data.map(item => [item.time, item.price]),
               smooth: true,
-              symbol: 'none',
-              lineStyle: { width: 2 },
-              itemStyle: { color: '#45b97c' }
+              symbol: 'circle',
+              symbolSize: 1,
+              sampling: 'lttb',
+              lineStyle: { 
+                width: 2,
+                color: '#45b97c'
+              },
+              itemStyle: { 
+                color: '#45b97c',
+                borderWidth: 0
+              },
+              areaStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: 'rgba(69, 185, 124, 0.2)' },
+                  { offset: 1, color: 'rgba(69, 185, 124, 0)' }
+                ])
+              }
             },
             {
               name: '成交量',
@@ -508,9 +593,13 @@ export default {
               yAxisIndex: 1,
               data: data.map(item => [item.time, item.volume]),
               itemStyle: {
-                color: 'rgba(38, 166, 154, 0.3)'
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: 'rgba(69, 185, 124, 0.3)' },
+                  { offset: 1, color: 'rgba(69, 185, 124, 0.1)' }
+                ])
               },
-              barWidth: '60%'
+              barWidth: '60%',
+              barGap: '0%'
             }
           ]
         };
@@ -1006,109 +1095,102 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
-  padding: 8px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #ebeef5;
 }
 
 .quality-selector {
   display: flex;
-  gap: 4px;
-  margin-right: 20px;
+  gap: 6px;
+  margin-right: 24px;
   flex-wrap: wrap;
 }
 
 .quality-btn {
-  padding: 4px 8px;
-  border: 1px solid #ddd;
+  padding: 6px 12px;
+  border: 1px solid #e4e7ed;
   background-color: #fff;
-  color: #666;
-  border-radius: 4px;
+  color: #606266;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  font-weight: 500;
 }
 
 .quality-btn:hover:not(.disabled) {
-  background-color: #f0f0f0;
+  background-color: #f5f7fa;
+  border-color: #45b97c;
+  color: #45b97c;
 }
 
 .quality-btn.active {
   background-color: #45b97c;
   color: #fff;
   border-color: #45b97c;
+  box-shadow: 0 2px 4px rgba(69, 185, 124, 0.2);
 }
 
 .quality-btn.disabled {
-  background-color: #f5f5f5;
-  color: #999;
-  cursor: pointer;
-  border-color: #ddd;
-}
-
-/* 图表容器样式 */
-.price-chart {
-  width: 100%;
-  min-height: 300px;
-  height: calc(100vh - 500px);
-  max-height: 600px;
-  background-color: #fff;
-  border-radius: 4px;
-  border: 1px solid #ebeef5;
-  overflow: hidden;
-}
-
-/* 响应式图表高度 */
-@media screen and (max-width: 768px) {
-  .price-chart {
-    height: 300px;
-  }
-}
-
-@media screen and (min-width: 769px) and (max-width: 1200px) {
-  .price-chart {
-    height: 400px;
-  }
-}
-
-@media screen and (min-width: 1201px) {
-  .price-chart {
-    height: 500px;
-  }
+  background-color: #f5f7fa;
+  color: #c0c4cc;
+  cursor: not-allowed;
+  border-color: #e4e7ed;
 }
 
 /* 时间周期选择器样式 */
 .time-selector {
   display: flex;
-  gap: 4px;
+  gap: 6px;
 }
 
 .time-btn {
-  padding: 4px 8px;
-  border: 1px solid #ddd;
+  padding: 6px 12px;
+  border: 1px solid #e4e7ed;
   background-color: #fff;
-  color: #666;
-  border-radius: 4px;
+  color: #606266;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  font-weight: 500;
 }
 
 .time-btn:hover:not(.disabled) {
-  background-color: #f0f0f0;
+  background-color: #f5f7fa;
+  border-color: #45b97c;
+  color: #45b97c;
 }
 
 .time-btn.active {
   background-color: #45b97c;
   color: #fff;
   border-color: #45b97c;
+  box-shadow: 0 2px 4px rgba(69, 185, 124, 0.2);
 }
 
 .time-btn.disabled {
-  background-color: #f5f5f5;
-  color: #999;
-  cursor: pointer;
-  border-color: #ddd;
+  background-color: #f5f7fa;
+  color: #c0c4cc;
+  cursor: not-allowed;
+  border-color: #e4e7ed;
+}
+
+/* 图表容器样式 */
+.price-chart {
+  width: 100%;
+  min-height: 400px;
+  height: calc(100vh - 500px);
+  max-height: 600px;
+  background-color: #fff;
+  border-radius: 8px;
+  border: 1px solid #ebeef5;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 16px;
 }
 </style>
