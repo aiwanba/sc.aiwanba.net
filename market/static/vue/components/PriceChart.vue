@@ -341,14 +341,38 @@ export default {
               smooth: false,
               symbol: 'circle',
               symbolSize: 6,
-              showSymbol: false,
-              showAllSymbol: 'auto',
+              showSymbol: true,
+              showAllSymbol: true,
               sampling: 'none',
               connectNulls: false,
+              label: {
+                show: false,
+                position: 'top',
+                distance: 10,
+                formatter: (params) => this.formatPrice(params.value[1]),
+                color: '#45b97c',
+                fontSize: 12,
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                padding: [4, 8],
+                borderRadius: 4,
+                borderColor: '#45b97c',
+                borderWidth: 1
+              },
               emphasis: {
                 scale: true,
                 focus: 'series',
                 blurScope: 'coordinateSystem',
+                label: {
+                  show: true,
+                  formatter: (params) => this.formatPrice(params.value[1]),
+                  color: '#45b97c',
+                  fontSize: 12,
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  padding: [4, 8],
+                  borderRadius: 4,
+                  borderColor: '#45b97c',
+                  borderWidth: 1
+                },
                 itemStyle: {
                   symbolSize: 8,
                   borderWidth: 2,
@@ -364,7 +388,9 @@ export default {
               itemStyle: { 
                 color: '#45b97c',
                 borderWidth: 2,
-                borderColor: '#fff'
+                borderColor: '#fff',
+                shadowBlur: 4,
+                shadowColor: 'rgba(0, 0, 0, 0.1)'
               },
               areaStyle: {
                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
