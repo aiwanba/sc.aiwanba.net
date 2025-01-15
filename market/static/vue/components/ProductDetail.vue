@@ -251,10 +251,40 @@ export default {
     },
     formatTime(time) {
       if (!time || time === '-') return '-';
-      return new Date(time).toLocaleTimeString('zh-CN', {
+      return this.getRelativeTime(new Date(time));
+    },
+    getRelativeTime(date) {
+      const now = new Date();
+      const diffInSeconds = Math.floor((now - date) / 1000);
+      
+      if (diffInSeconds < 60) {
+        if (diffInSeconds < 10) {
+          return '几秒前';
+        }
+        return `${Math.floor(diffInSeconds / 10) * 10}秒前`;
+      }
+      
+      const diffInMinutes = Math.floor(diffInSeconds / 60);
+      if (diffInMinutes < 60) {
+        return `${diffInMinutes}分钟前`;
+      }
+      
+      const diffInHours = Math.floor(diffInMinutes / 60);
+      if (diffInHours < 24) {
+        return `${diffInHours}小时前`;
+      }
+      
+      const diffInDays = Math.floor(diffInHours / 24);
+      if (diffInDays < 30) {
+        return `${diffInDays}天前`;
+      }
+      
+      // 如果超过30天，显示具体日期
+      return date.toLocaleString('zh-CN', {
+        month: '2-digit',
+        day: '2-digit',
         hour: '2-digit',
         minute: '2-digit',
-        second: '2-digit',
         hour12: false
       });
     },
