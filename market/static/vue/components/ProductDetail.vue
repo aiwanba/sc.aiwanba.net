@@ -394,63 +394,98 @@ export default {
         axisPointer: {
           link: [{ xAxisIndex: [0, 1] }]
         },
-        grid: [{
-          left: 80,
-          right: 60,
-          top: 30,
-          bottom: 60,
-          height: '80%'
-        }],
-        xAxis: [{
-          type: 'time',
-          boundaryGap: false,
-          axisLine: { lineStyle: { color: '#999' } },
-          splitLine: {
-            show: true,
-            lineStyle: {
-              color: '#eee',
-              type: 'dashed'
-            }
+        grid: [
+          {
+            left: 80,
+            right: 60,
+            top: 30,
+            height: '60%'
           },
-          axisLabel: {
-            show: true,
-            formatter: (value) => {
-              const date = new Date(value);
-              if (this.currentPeriod === '1h') {
-                return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-              } else if (this.currentPeriod === '1d') {
-                return date.toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-              } else {
-                return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+          {
+            left: 80,
+            right: 60,
+            top: '75%',
+            height: '20%'
+          }
+        ],
+        xAxis: [
+          {
+            type: 'time',
+            boundaryGap: false,
+            axisLine: { lineStyle: { color: '#999' } },
+            splitLine: {
+              show: true,
+              lineStyle: {
+                color: '#eee',
+                type: 'dashed'
+              }
+            },
+            axisLabel: {
+              show: true,
+              formatter: (value) => {
+                const date = new Date(value);
+                if (this.currentPeriod === '1h') {
+                  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                } else if (this.currentPeriod === '1d') {
+                  return date.toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                } else {
+                  return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+                }
               }
             }
-          }
-        }],
-        yAxis: [{
-          scale: true,
-          position: 'left',
-          axisLine: { lineStyle: { color: '#999' } },
-          splitLine: { 
-            show: true, 
-            lineStyle: { color: '#eee' } 
           },
-          axisLabel: {
-            formatter: (value) => this.formatPrice(value)
+          {
+            type: 'time',
+            gridIndex: 1,
+            boundaryGap: false,
+            axisLine: { lineStyle: { color: '#999' } },
+            axisTick: { show: false },
+            axisLabel: { show: false },
+            splitLine: { show: false }
           }
-        }, {
-          scale: true,
-          position: 'right',
-          axisLine: { lineStyle: { color: '#999' } },
-          splitLine: { show: false },
-          axisLabel: {
-            formatter: (value) => value.toLocaleString()
+        ],
+        yAxis: [
+          {
+            scale: true,
+            position: 'left',
+            axisLine: { lineStyle: { color: '#999' } },
+            splitLine: { 
+              show: true, 
+              lineStyle: { color: '#eee' } 
+            },
+            axisLabel: {
+              formatter: (value) => this.formatPrice(value)
+            }
+          },
+          {
+            scale: true,
+            gridIndex: 1,
+            position: 'left',
+            axisLine: { lineStyle: { color: '#999' } },
+            axisTick: { show: false },
+            splitLine: { show: false },
+            axisLabel: {
+              formatter: (value) => value.toLocaleString()
+            }
           }
-        }],
-        dataZoom: [{
-          type: 'inside',
-          start: 0,
-          end: 100
-        }],
+        ],
+        dataZoom: [
+          {
+            type: 'inside',
+            xAxisIndex: [0, 1],
+            start: 0,
+            end: 100
+          },
+          {
+            show: true,
+            xAxisIndex: [0, 1],
+            type: 'slider',
+            bottom: 10,
+            start: 0,
+            end: 100,
+            height: 20
+          }
+        ],
         series: this.getSeriesConfig()
       };
 
@@ -460,24 +495,6 @@ export default {
       const data = this.generateMockData();
       const series = [];
       
-      // 成交量柱状图（放在底层）
-      series.push({
-        name: '成交量',
-        type: 'bar',
-        yAxisIndex: 1,
-        data: data.map(item => [item[0], item[5]]),
-        itemStyle: {
-          color: (params) => {
-            const index = params.dataIndex;
-            const closePrice = data[index][4];
-            const openPrice = data[index][1];
-            return closePrice >= openPrice ? 'rgba(38, 166, 154, 0.3)' : 'rgba(239, 83, 80, 0.3)';
-          }
-        },
-        barWidth: '60%',
-        z: 1
-      });
-
       // 价格图表（放在上层）
       if (this.currentChartType === 'candlestick') {
         series.push({
@@ -495,8 +512,7 @@ export default {
             color0: '#26a69a',
             borderColor: '#ef5350',
             borderColor0: '#26a69a'
-          },
-          z: 2
+          }
         });
       } else {
         series.push({
@@ -506,10 +522,27 @@ export default {
           smooth: true,
           symbol: 'none',
           lineStyle: { width: 2 },
-          itemStyle: { color: '#45b97c' },
-          z: 2
+          itemStyle: { color: '#45b97c' }
         });
       }
+
+      // 成交量柱状图（放在下层）
+      series.push({
+        name: '成交量',
+        type: 'bar',
+        xAxisIndex: 1,
+        yAxisIndex: 1,
+        data: data.map(item => [item[0], item[5]]),
+        itemStyle: {
+          color: (params) => {
+            const index = params.dataIndex;
+            const closePrice = data[index][4];
+            const openPrice = data[index][1];
+            return closePrice >= openPrice ? 'rgba(38, 166, 154, 0.3)' : 'rgba(239, 83, 80, 0.3)';
+          }
+        },
+        barWidth: '60%'
+      });
 
       return series;
     },
