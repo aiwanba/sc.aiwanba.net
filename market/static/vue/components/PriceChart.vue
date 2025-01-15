@@ -165,12 +165,12 @@ export default {
             left: 80,
             right: 60,
             top: 40,
-            height: '58%'
+            height: '50%'
           }, {
             left: 80,
             right: 60,
-            top: '75%',
-            height: '15%'
+            top: '65%',
+            height: '25%'
           }],
           axisPointer: {
             link: [{
@@ -559,9 +559,9 @@ export default {
 /* 图表容器样式 */
 .price-chart {
   width: 100%;
-  min-height: 400px;
-  height: calc(100vh - 500px);
-  max-height: 600px;
+  min-height: 585px;
+  height: calc(100vh - 400px);
+  max-height: 800px;
   background-color: #fff;
   border-radius: 8px;
   border: 1px solid #ebeef5;
