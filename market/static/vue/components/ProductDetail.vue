@@ -387,235 +387,192 @@ export default {
       this.chart = echarts.init(this.$refs.priceChart);
       this.updateChart();
     },
-    updateChart() {
-      const option = {
-        animation: false,
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'cross',
-            snap: true,
-            label: {
-              backgroundColor: '#777'
-            }
-          },
-          formatter: (params) => {
-            const date = new Date(params[0].data[0]);
-            let res = date.toLocaleString('zh-CN', {
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: false
-            }) + '<br/>';
-            
-            params.forEach(param => {
-              if (param.seriesName === '成交量') {
-                res += `${param.seriesName}: ${param.data[1].toLocaleString()}<br/>`;
-              } else {
-                if (this.currentChartType === 'candlestick') {
-                  res += `开盘: ${this.formatPrice(param.data[1])}<br/>`;
-                  res += `最高: ${this.formatPrice(param.data[2])}<br/>`;
-                  res += `最低: ${this.formatPrice(param.data[3])}<br/>`;
-                  res += `收盘: ${this.formatPrice(param.data[4])}<br/>`;
+    async updateChart() {
+      try {
+        const data = await this.fetchHistoryData();
+        
+        const option = {
+          animation: false,
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+              type: 'cross',
+              snap: true,
+              label: {
+                backgroundColor: '#777'
+              }
+            },
+            formatter: (params) => {
+              const date = new Date(params[0].data[0]);
+              let res = date.toLocaleString('zh-CN', {
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+              }) + '<br/>';
+              
+              params.forEach(param => {
+                if (param.seriesName === '成交量') {
+                  res += `${param.seriesName}: ${param.data[1].toLocaleString()}<br/>`;
                 } else {
                   res += `${param.seriesName}: ${this.formatPrice(param.data[1])}<br/>`;
                 }
-              }
-            });
-            return res;
-          }
-        },
-        axisPointer: {
-          link: [{ xAxisIndex: [0, 1] }]
-        },
-        grid: [
-          {
-            left: 80,
-            right: 60,
-            top: 30,
-            height: '60%'
+              });
+              return res;
+            }
           },
-          {
-            left: 80,
-            right: 60,
-            top: '75%',
-            height: '20%'
-          }
-        ],
-        xAxis: [
-          {
-            type: 'time',
-            boundaryGap: false,
-            axisLine: { lineStyle: { color: '#999' } },
-            splitLine: {
-              show: true,
-              lineStyle: {
-                color: '#eee',
-                type: 'dashed'
-              }
+          axisPointer: {
+            link: [{ xAxisIndex: [0, 1] }]
+          },
+          grid: [
+            {
+              left: 80,
+              right: 60,
+              top: 30,
+              height: '60%'
             },
-            axisLabel: {
-              show: true,
-              formatter: (value) => {
-                const date = new Date(value);
-                if (this.currentPeriod === '1h') {
-                  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-                } else if (this.currentPeriod === '1d') {
-                  return date.toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-                } else {
-                  return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+            {
+              left: 80,
+              right: 60,
+              top: '75%',
+              height: '20%'
+            }
+          ],
+          xAxis: [
+            {
+              type: 'time',
+              boundaryGap: false,
+              axisLine: { lineStyle: { color: '#999' } },
+              splitLine: {
+                show: true,
+                lineStyle: {
+                  color: '#eee',
+                  type: 'dashed'
+                }
+              },
+              axisLabel: {
+                show: true,
+                formatter: (value) => {
+                  const date = new Date(value);
+                  if (this.currentPeriod === '1h') {
+                    return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                  } else if (this.currentPeriod === '1d') {
+                    return date.toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                  } else {
+                    return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+                  }
                 }
               }
-            }
-          },
-          {
-            type: 'time',
-            gridIndex: 1,
-            boundaryGap: false,
-            axisLine: { lineStyle: { color: '#999' } },
-            axisTick: { show: false },
-            axisLabel: { show: false },
-            splitLine: { show: false }
-          }
-        ],
-        yAxis: [
-          {
-            scale: true,
-            position: 'left',
-            axisLine: { lineStyle: { color: '#999' } },
-            splitLine: { 
-              show: true, 
-              lineStyle: { color: '#eee' } 
             },
-            axisLabel: {
-              formatter: (value) => this.formatPrice(value)
+            {
+              type: 'time',
+              gridIndex: 1,
+              boundaryGap: false,
+              axisLine: { lineStyle: { color: '#999' } },
+              axisTick: { show: false },
+              axisLabel: { show: false },
+              splitLine: { show: false }
             }
-          },
+          ],
+          yAxis: [
+            {
+              scale: true,
+              position: 'left',
+              axisLine: { lineStyle: { color: '#999' } },
+              splitLine: { 
+                show: true, 
+                lineStyle: { color: '#eee' } 
+              },
+              axisLabel: {
+                formatter: (value) => this.formatPrice(value)
+              }
+            },
+            {
+              scale: true,
+              gridIndex: 1,
+              position: 'left',
+              axisLine: { lineStyle: { color: '#999' } },
+              axisTick: { show: false },
+              splitLine: { show: false },
+              axisLabel: {
+                formatter: (value) => value.toLocaleString()
+              }
+            }
+          ],
+          dataZoom: [
+            {
+              type: 'inside',
+              xAxisIndex: [0, 1],
+              start: 0,
+              end: 100
+            },
+            {
+              show: true,
+              xAxisIndex: [0, 1],
+              type: 'slider',
+              bottom: 10,
+              start: 0,
+              end: 100,
+              height: 20
+            }
+          ],
+          series: [
+            {
+              name: '价格',
+              type: this.currentChartType === 'candlestick' ? 'candlestick' : 'line',
+              data: data.map(item => [item.time, item.price]),
+              smooth: true,
+              symbol: 'none',
+              lineStyle: { width: 2 },
+              itemStyle: { color: '#45b97c' }
+            },
+            {
+              name: '成交量',
+              type: 'bar',
+              xAxisIndex: 1,
+              yAxisIndex: 1,
+              data: data.map(item => [item.time, item.volume]),
+              itemStyle: {
+                color: 'rgba(38, 166, 154, 0.3)'
+              },
+              barWidth: '60%'
+            }
+          ]
+        };
+
+        this.chart.setOption(option);
+      } catch (err) {
+        console.error('Error updating chart:', err);
+      }
+    },
+    async fetchHistoryData() {
+      try {
+        const response = await fetch(
+          `/market/api/v1/market/history/${this.serverType}/${this.productId}/${this.currentQuality}?period=${this.currentPeriod}`,
           {
-            scale: true,
-            gridIndex: 1,
-            position: 'left',
-            axisLine: { lineStyle: { color: '#999' } },
-            axisTick: { show: false },
-            splitLine: { show: false },
-            axisLabel: {
-              formatter: (value) => value.toLocaleString()
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
             }
           }
-        ],
-        dataZoom: [
-          {
-            type: 'inside',
-            xAxisIndex: [0, 1],
-            start: 0,
-            end: 100
-          },
-          {
-            show: true,
-            xAxisIndex: [0, 1],
-            type: 'slider',
-            bottom: 10,
-            start: 0,
-            end: 100,
-            height: 20
-          }
-        ],
-        series: this.getSeriesConfig()
-      };
+        );
 
-      this.chart.setOption(option);
-    },
-    getSeriesConfig() {
-      const data = this.generateMockData();
-      const series = [];
-      
-      // 价格图表（放在上层）
-      if (this.currentChartType === 'candlestick') {
-        series.push({
-          name: '价格',
-          type: 'candlestick',
-          data: data.map(item => [
-            item[0], // 时间
-            item[1], // 开盘价
-            item[2], // 最高价
-            item[3], // 最低价
-            item[4]  // 收盘价
-          ]),
-          itemStyle: {
-            color: '#ef5350',
-            color0: '#26a69a',
-            borderColor: '#ef5350',
-            borderColor0: '#26a69a'
-          }
-        });
-      } else {
-        series.push({
-          name: '价格',
-          type: 'line',
-          data: data.map(item => [item[0], item[4]]), // 使用收盘价
-          smooth: true,
-          symbol: 'none',
-          lineStyle: { width: 2 },
-          itemStyle: { color: '#45b97c' }
-        });
+        if (!response.ok) {
+          throw new Error(`获取数据失败: ${response.status}`);
+        }
+
+        const result = await response.json();
+        if (result.code === 0) {
+          return result.data;
+        } else {
+          throw new Error(result.message || '获取数据失败');
+        }
+      } catch (err) {
+        console.error('Error fetching history data:', err);
+        return [];
       }
-
-      // 成交量柱状图（放在下层）
-      series.push({
-        name: '成交量',
-        type: 'bar',
-        xAxisIndex: 1,
-        yAxisIndex: 1,
-        data: data.map(item => [item[0], item[5]]),
-        itemStyle: {
-          color: (params) => {
-            const index = params.dataIndex;
-            const closePrice = data[index][4];
-            const openPrice = data[index][1];
-            return closePrice >= openPrice ? 'rgba(38, 166, 154, 0.3)' : 'rgba(239, 83, 80, 0.3)';
-          }
-        },
-        barWidth: '60%'
-      });
-
-      return series;
-    },
-    generateMockData() {
-      const now = new Date();
-      const data = [];
-      let time = now;
-      const count = this.currentPeriod === '1h' ? 60 : 
-                    this.currentPeriod === '1d' ? 24 : 30;
-      const interval = this.currentPeriod === '1h' ? 60000 : 
-                      this.currentPeriod === '1d' ? 3600000 : 86400000;
-
-      // 根据品质等级调整基准价格
-      const basePrice = 0.26 * (1 + this.currentQuality * 0.1); // 品质越高，价格越高
-
-      for (let i = 0; i < count; i++) {
-        const randomFactor = 0.01;
-        const open = basePrice + (Math.random() - 0.5) * randomFactor;
-        const close = basePrice + (Math.random() - 0.5) * randomFactor;
-        const low = Math.min(open, close) - Math.random() * 0.005;
-        const high = Math.max(open, close) + Math.random() * 0.005;
-        // 根据品质调整成交量，品质越高成交量越少
-        const volumeBase = 50000 / (1 + this.currentQuality * 0.2);
-        const volume = Math.floor(Math.random() * volumeBase) + 10000;
-        
-        data.unshift([
-          time.getTime(),
-          open,
-          high,
-          low,
-          close,
-          volume
-        ]);
-        
-        time = new Date(time.getTime() - interval);
-      }
-      
-      return data;
     },
     handleResize() {
       if (this.chart) {
