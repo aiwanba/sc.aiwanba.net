@@ -129,6 +129,9 @@ export default {
                 color: '#fff',
                 formatter: function (params) {
                   if (params.axisDimension === 'y') {
+                    return '';
+                  }
+                  if (params.axisDimension === 'x') {
                     if (params.axisIndex === 0) {
                       return `价格: ${Number(params.value).toFixed(3)}`;
                     }
@@ -136,7 +139,7 @@ export default {
                       return `成交量: ${Math.round(params.value).toLocaleString()}`;
                     }
                   }
-                  return '';  // x轴不显示标签
+                  return '';
                 }
               }
             },
