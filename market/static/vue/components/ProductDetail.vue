@@ -161,7 +161,7 @@
                       {{ period.label }}
                     </button>
                   </div>
-                </div>
+                  </div>
                 <!-- 图表容器 -->
                 <div ref="priceChart" class="price-chart"></div>
               </div>
@@ -365,65 +365,77 @@ export default {
       try {
         const data = await this.fetchHistoryData();
         
-        const option = {
+      const option = {
           backgroundColor: '#fff',
-          animation: false,
-          tooltip: {
-            trigger: 'axis',
-            axisPointer: {
-              type: 'cross',
-              snap: true,
-              label: {
-                backgroundColor: '#45b97c'
-              },
-              crossStyle: {
-                color: '#45b97c'
-              }
+        animation: false,
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross',
+            animation: false,
+            snap: true,
+            lineStyle: {
+              color: '#45b97c',
+              width: 1
             },
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            borderColor: '#eee',
-            borderWidth: 1,
-            textStyle: {
-              color: '#333',
-              fontSize: 12
-            },
-            padding: [8, 12],
-            formatter: (params) => {
-              const date = new Date(params[0].data[0]);
-              let res = `<div style="font-weight: bold; margin-bottom: 4px;">${date.toLocaleString('zh-CN', {
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-              })}</div>`;
-              
-              params.forEach(param => {
-                const color = param.color || '#45b97c';
-                if (param.seriesName === '成交量') {
-                  res += `<div style="display: flex; justify-content: space-between; align-items: center; margin: 2px 0;">
-                    <span style="color: ${color};">●</span>
-                    <span style="margin-right: 12px;">${param.seriesName}:</span>
-                    <span style="font-family: Monaco, monospace;">${param.data[1].toLocaleString()}</span>
-                  </div>`;
-                } else {
-                  res += `<div style="display: flex; justify-content: space-between; align-items: center; margin: 2px 0;">
-                    <span style="color: ${color};">●</span>
-                    <span style="margin-right: 12px;">${param.seriesName}:</span>
-                    <span style="font-family: Monaco, monospace;">${this.formatPrice(param.data[1])}</span>
-                  </div>`;
-                }
-              });
-              return res;
+            crossStyle: {
+              color: '#45b97c',
+              width: 1,
+              type: 'dashed'
             }
           },
-          axisPointer: {
-            link: [{ xAxisIndex: [0, 1] }]
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderColor: '#eee',
+          borderWidth: 1,
+          textStyle: {
+            color: '#333',
+            fontSize: 12
           },
+          padding: [8, 12],
+          position: function (pos, params, el, elRect, size) {
+            const obj = {top: 10};
+            obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 60;
+            return obj;
+          },
+          formatter: (params) => {
+            const date = new Date(params[0].data[0]);
+            let res = `<div style="font-weight: bold; margin-bottom: 4px;">${date.toLocaleString('zh-CN', {
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false
+            })}</div>`;
+            
+            params.forEach(param => {
+              const color = param.color || '#45b97c';
+              if (param.seriesName === '成交量') {
+                res += `<div style="display: flex; justify-content: space-between; align-items: center; margin: 2px 0;">
+                  <span style="color: ${color};">●</span>
+                  <span style="margin-right: 12px;">${param.seriesName}:</span>
+                  <span style="font-family: Monaco, monospace;">${param.data[1].toLocaleString()}</span>
+                </div>`;
+              } else {
+                res += `<div style="display: flex; justify-content: space-between; align-items: center; margin: 2px 0;">
+                  <span style="color: ${color};">●</span>
+                  <span style="margin-right: 12px;">${param.seriesName}:</span>
+                  <span style="font-family: Monaco, monospace; font-weight: bold;">${this.formatPrice(param.data[1])}</span>
+                </div>`;
+              }
+            });
+            return res;
+          }
+        },
+        axisPointer: {
+          link: [{xAxisIndex: 'all'}],
+          label: {
+            backgroundColor: '#45b97c'
+          }
+        },
           grid: [
             {
-              left: 80,
-              right: 60,
+          left: 80,
+          right: 60,
               top: 40,
               height: '58%'
             },
@@ -436,8 +448,8 @@ export default {
           ],
           xAxis: [
             {
-              type: 'time',
-              boundaryGap: false,
+          type: 'time',
+          boundaryGap: false,
               axisLine: { 
                 show: true,
                 lineStyle: { 
@@ -445,29 +457,29 @@ export default {
                   width: 1
                 }
               },
-              splitLine: {
-                show: true,
-                lineStyle: {
+          splitLine: {
+            show: true,
+            lineStyle: {
                   color: '#f5f5f5',
                   width: 1,
                   type: 'solid'
-                }
-              },
-              axisLabel: {
-                show: true,
+            }
+          },
+          axisLabel: {
+            show: true,
                 color: '#999',
                 fontSize: 11,
-                formatter: (value) => {
-                  const date = new Date(value);
-                  if (this.currentPeriod === '1h') {
-                    return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-                  } else if (this.currentPeriod === '1d') {
-                    return date.toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-                  } else {
-                    return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
-                  }
-                }
+            formatter: (value) => {
+              const date = new Date(value);
+              if (this.currentPeriod === '1h') {
+                return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+              } else if (this.currentPeriod === '1d') {
+                return date.toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+              } else {
+                return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
               }
+            }
+          }
             },
             {
               type: 'time',
@@ -487,8 +499,8 @@ export default {
           ],
           yAxis: [
             {
-              scale: true,
-              position: 'left',
+          scale: true,
+          position: 'left',
               axisLine: { 
                 show: true,
                 lineStyle: { 
@@ -496,22 +508,22 @@ export default {
                   width: 1
                 }
               },
-              splitLine: { 
-                show: true, 
+          splitLine: { 
+            show: true, 
                 lineStyle: { 
                   color: '#f5f5f5',
                   width: 1,
                   type: 'solid'
                 }
-              },
-              axisLabel: {
+          },
+          axisLabel: {
                 color: '#999',
                 fontSize: 11,
-                formatter: (value) => this.formatPrice(value)
-              }
+            formatter: (value) => this.formatPrice(value)
+          }
             },
             {
-              scale: true,
+          scale: true,
               gridIndex: 1,
               position: 'left',
               axisLine: { 
@@ -522,19 +534,19 @@ export default {
                 }
               },
               axisTick: { show: false },
-              splitLine: { show: false },
-              axisLabel: {
+          splitLine: { show: false },
+          axisLabel: {
                 color: '#999',
                 fontSize: 11,
-                formatter: (value) => value.toLocaleString()
-              }
+            formatter: (value) => value.toLocaleString()
+          }
             }
           ],
           dataZoom: [
             {
-              type: 'inside',
+          type: 'inside',
               xAxisIndex: [0, 1],
-              start: 0,
+          start: 0,
               end: 100,
               minValueSpan: 3600 * 1000 * 1, // 最小1小时
               maxValueSpan: 3600 * 1000 * 24 * 30 // 最大30天
@@ -567,17 +579,46 @@ export default {
               name: '价格',
               type: 'line',
               data: data.map(item => [item.time, item.price]),
-              smooth: true,
+              smooth: false,
               symbol: 'circle',
-              symbolSize: 1,
-              sampling: 'lttb',
+              symbolSize: 4,
+              showSymbol: false,
+              sampling: 'none',
+              connectNulls: false,
+              emphasis: {
+                scale: true,
+                focus: 'series',
+                itemStyle: {
+                  symbolSize: 6,
+                  borderWidth: 2,
+                  borderColor: '#fff',
+                  shadowBlur: 10,
+                  shadowColor: 'rgba(69, 185, 124, 0.3)'
+                }
+              },
               lineStyle: { 
                 width: 2,
                 color: '#45b97c'
               },
               itemStyle: { 
                 color: '#45b97c',
-                borderWidth: 0
+                borderWidth: 2,
+                borderColor: '#fff'
+              },
+              tooltip: {
+                show: true,
+                trigger: 'axis',
+                formatter: function(params) {
+                  const date = new Date(params[0].data[0]);
+                  return `${date.toLocaleString('zh-CN', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  })}<br/>
+                  价格: ${params[0].data[1].toFixed(3)}`;
+                }
               },
               areaStyle: {
                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
