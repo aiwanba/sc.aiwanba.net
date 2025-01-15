@@ -384,32 +384,14 @@ export default {
           link: [{ xAxisIndex: [0, 1] }]
         },
         grid: [{
-          left: 60,
+          left: 80,
           right: 60,
           top: 30,
-          bottom: 100,
-          height: '60%'
-        }, {
-          left: 60,
-          right: 60,
-          top: '75%',
-          height: '20%'
+          bottom: 60,
+          height: '80%'
         }],
         xAxis: [{
           type: 'time',
-          boundaryGap: false,
-          axisLine: { lineStyle: { color: '#999' } },
-          splitLine: {
-            show: true,
-            lineStyle: {
-              color: '#eee',
-              type: 'dashed'
-            }
-          },
-          axisLabel: { show: false }
-        }, {
-          type: 'time',
-          gridIndex: 1,
           boundaryGap: false,
           axisLine: { lineStyle: { color: '#999' } },
           splitLine: {
@@ -446,23 +428,17 @@ export default {
           }
         }, {
           scale: true,
-          gridIndex: 1,
-          position: 'left',
+          position: 'right',
           axisLine: { lineStyle: { color: '#999' } },
-          splitLine: { 
-            show: true, 
-            lineStyle: { color: '#eee' } 
-          },
+          splitLine: { show: false },
           axisLabel: {
             formatter: (value) => value.toLocaleString()
           }
         }],
         dataZoom: [{
           type: 'inside',
-          xAxisIndex: [0, 1],
           start: 0,
-          end: 100,
-          top: '90%'
+          end: 100
         }],
         series: this.getSeriesConfig()
       };
@@ -473,7 +449,25 @@ export default {
       const data = this.generateMockData();
       const series = [];
       
-      // 价格图表
+      // 成交量柱状图（放在底层）
+      series.push({
+        name: '成交量',
+        type: 'bar',
+        yAxisIndex: 1,
+        data: data.map(item => [item[0], item[5]]),
+        itemStyle: {
+          color: (params) => {
+            const index = params.dataIndex;
+            const closePrice = data[index][4];
+            const openPrice = data[index][1];
+            return closePrice >= openPrice ? 'rgba(38, 166, 154, 0.3)' : 'rgba(239, 83, 80, 0.3)';
+          }
+        },
+        barWidth: '60%',
+        z: 1
+      });
+
+      // 价格图表（放在上层）
       if (this.currentChartType === 'candlestick') {
         series.push({
           name: '价格',
@@ -490,7 +484,8 @@ export default {
             color0: '#26a69a',
             borderColor: '#ef5350',
             borderColor0: '#26a69a'
-          }
+          },
+          z: 2
         });
       } else {
         series.push({
@@ -500,27 +495,10 @@ export default {
           smooth: true,
           symbol: 'none',
           lineStyle: { width: 2 },
-          itemStyle: { color: '#45b97c' }
+          itemStyle: { color: '#45b97c' },
+          z: 2
         });
       }
-
-      // 成交量柱状图
-      series.push({
-        name: '成交量',
-        type: 'bar',
-        xAxisIndex: 1,
-        yAxisIndex: 1,
-        data: data.map(item => [item[0], item[5]]),
-        itemStyle: {
-          color: (params) => {
-            const index = params.dataIndex;
-            const closePrice = data[index][4];
-            const openPrice = data[index][1];
-            return closePrice >= openPrice ? '#26a69a' : '#ef5350';
-          },
-          opacity: 0.8
-        }
-      });
 
       return series;
     },
