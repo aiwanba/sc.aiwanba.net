@@ -126,9 +126,31 @@
             <div class="detail-section">
               <div class="section-header">价格信息</div>
               <div class="section-content">
-                <div class="price-chart">
-                  <div class="placeholder">价格趋势图</div>
+                <div class="chart-controls">
+                  <!-- 时间周期选择 -->
+                  <div class="time-selector">
+                    <button 
+                      v-for="period in timePeriods" 
+                      :key="period.value"
+                      :class="['time-btn', { active: currentPeriod === period.value }]"
+                      @click="changePeriod(period.value)"
+                    >
+                      {{ period.label }}
+                    </button>
+                  </div>
+                  <!-- 图表类型切换 -->
+                  <div class="chart-type-selector">
+                    <button 
+                      v-for="type in chartTypes" 
+                      :key="type.value"
+                      :class="['chart-type-btn', { active: currentChartType === type.value }]"
+                      @click="changeChartType(type.value)"
+                    >
+                      {{ type.label }}
+                    </button>
+                  </div>
                 </div>
+                <div ref="priceChart" class="price-chart"></div>
               </div>
             </div>
           </div>
@@ -140,6 +162,7 @@
 
 <script>
 import { PRODUCT_TYPES, PRODUCT_GROUPS } from '../config.js'
+import * as echarts from 'echarts';
 
 export default {
   name: 'ProductDetail',
@@ -151,7 +174,19 @@ export default {
       qualityData: [],
       loading: false,
       error: null,
-      lastUpdateTime: null
+      lastUpdateTime: null,
+      currentPeriod: '1d',
+      currentChartType: 'line',
+      chart: null,
+      timePeriods: [
+        { label: '1小时', value: '1h' },
+        { label: '1天', value: '1d' },
+        { label: '1个月', value: '1m' }
+      ],
+      chartTypes: [
+        { label: '蜡烛图', value: 'candlestick' },
+        { label: '折线图', value: 'line' }
+      ]
     }
   },
   methods: {
@@ -298,6 +333,251 @@ export default {
       if (this.refreshInterval) {
         clearInterval(this.refreshInterval);
       }
+    },
+    initChart() {
+      if (this.chart) {
+        this.chart.dispose();
+      }
+      this.chart = echarts.init(this.$refs.priceChart);
+      this.updateChart();
+    },
+    updateChart() {
+      const option = {
+        animation: false,
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross',
+            snap: true,
+            label: {
+              backgroundColor: '#777'
+            }
+          },
+          formatter: (params) => {
+            const date = new Date(params[0].data[0]);
+            let res = date.toLocaleString('zh-CN', {
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false
+            }) + '<br/>';
+            
+            params.forEach(param => {
+              if (param.seriesName === '成交量') {
+                res += `${param.seriesName}: ${param.data[1].toLocaleString()}<br/>`;
+              } else {
+                if (this.currentChartType === 'candlestick') {
+                  res += `开盘: ${this.formatPrice(param.data[1])}<br/>`;
+                  res += `最高: ${this.formatPrice(param.data[2])}<br/>`;
+                  res += `最低: ${this.formatPrice(param.data[3])}<br/>`;
+                  res += `收盘: ${this.formatPrice(param.data[4])}<br/>`;
+                } else {
+                  res += `${param.seriesName}: ${this.formatPrice(param.data[1])}<br/>`;
+                }
+              }
+            });
+            return res;
+          }
+        },
+        axisPointer: {
+          link: [{ xAxisIndex: [0, 1] }]
+        },
+        grid: [{
+          left: 60,
+          right: 60,
+          top: 30,
+          height: '60%'
+        }, {
+          left: 60,
+          right: 60,
+          top: '75%',
+          height: '20%'
+        }],
+        xAxis: [{
+          type: 'time',
+          boundaryGap: false,
+          axisLine: { lineStyle: { color: '#999' } },
+          splitLine: {
+            show: true,
+            lineStyle: {
+              color: '#eee',
+              type: 'dashed'
+            }
+          },
+          axisLabel: {
+            formatter: (value) => {
+              const date = new Date(value);
+              if (this.currentPeriod === '1h') {
+                return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+              } else if (this.currentPeriod === '1d') {
+                return date.toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+              } else {
+                return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+              }
+            }
+          }
+        }, {
+          type: 'time',
+          gridIndex: 1,
+          boundaryGap: false,
+          axisLine: { lineStyle: { color: '#999' } },
+          splitLine: {
+            show: true,
+            lineStyle: {
+              color: '#eee',
+              type: 'dashed'
+            }
+          },
+          axisLabel: {
+            show: true,
+            formatter: (value) => {
+              const date = new Date(value);
+              if (this.currentPeriod === '1h') {
+                return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+              } else if (this.currentPeriod === '1d') {
+                return date.toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+              } else {
+                return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+              }
+            }
+          }
+        }],
+        yAxis: [{
+          scale: true,
+          position: 'left',
+          axisLine: { lineStyle: { color: '#999' } },
+          splitLine: { 
+            show: true, 
+            lineStyle: { color: '#eee' } 
+          },
+          axisLabel: {
+            formatter: (value) => this.formatPrice(value)
+          }
+        }, {
+          scale: true,
+          gridIndex: 1,
+          position: 'left',
+          axisLine: { lineStyle: { color: '#999' } },
+          splitLine: { 
+            show: true, 
+            lineStyle: { color: '#eee' } 
+          },
+          axisLabel: {
+            formatter: (value) => value.toLocaleString()
+          }
+        }],
+        dataZoom: [{
+          type: 'inside',
+          xAxisIndex: [0, 1],
+          start: 0,
+          end: 100,
+          top: '90%'
+        }],
+        series: this.getSeriesConfig()
+      };
+
+      this.chart.setOption(option);
+    },
+    getSeriesConfig() {
+      const data = this.generateMockData();
+      const series = [];
+      
+      // 价格图表
+      if (this.currentChartType === 'candlestick') {
+        series.push({
+          name: '价格',
+          type: 'candlestick',
+          data: data.map(item => [
+            item[0], // 时间
+            item[1], // 开盘价
+            item[2], // 最高价
+            item[3], // 最低价
+            item[4]  // 收盘价
+          ]),
+          itemStyle: {
+            color: '#ef5350',
+            color0: '#26a69a',
+            borderColor: '#ef5350',
+            borderColor0: '#26a69a'
+          }
+        });
+      } else {
+        series.push({
+          name: '价格',
+          type: 'line',
+          data: data.map(item => [item[0], item[4]]), // 使用收盘价
+          smooth: true,
+          symbol: 'none',
+          lineStyle: { width: 2 },
+          itemStyle: { color: '#45b97c' }
+        });
+      }
+
+      // 成交量柱状图
+      series.push({
+        name: '成交量',
+        type: 'bar',
+        xAxisIndex: 1,
+        yAxisIndex: 1,
+        data: data.map(item => [item[0], item[5]]),
+        itemStyle: {
+          color: (params) => {
+            const index = params.dataIndex;
+            const closePrice = data[index][4];
+            const openPrice = data[index][1];
+            return closePrice >= openPrice ? '#26a69a' : '#ef5350';
+          },
+          opacity: 0.8
+        }
+      });
+
+      return series;
+    },
+    generateMockData() {
+      const now = new Date();
+      const data = [];
+      let time = now;
+      const count = this.currentPeriod === '1h' ? 60 : 
+                    this.currentPeriod === '1d' ? 24 : 30;
+      const interval = this.currentPeriod === '1h' ? 60000 : 
+                      this.currentPeriod === '1d' ? 3600000 : 86400000;
+
+      for (let i = 0; i < count; i++) {
+        const basePrice = 0.26;
+        const randomFactor = 0.01;
+        const open = basePrice + (Math.random() - 0.5) * randomFactor;
+        const close = basePrice + (Math.random() - 0.5) * randomFactor;
+        const low = Math.min(open, close) - Math.random() * 0.005;
+        const high = Math.max(open, close) + Math.random() * 0.005;
+        const volume = Math.floor(Math.random() * 50000) + 10000; // 添加成交量数据
+        
+        data.unshift([
+          time.getTime(),
+          open,
+          high,
+          low,
+          close,
+          volume // 添加成交量
+        ]);
+        
+        time = new Date(time.getTime() - interval);
+      }
+      
+      return data;
+    },
+    changePeriod(period) {
+      this.currentPeriod = period;
+      this.updateChart();
+    },
+    changeChartType(type) {
+      this.currentChartType = type;
+      this.updateChart();
+    },
+    handleResize() {
+      if (this.chart) {
+        this.chart.resize();
+      }
     }
   },
   mounted() {
@@ -308,9 +588,17 @@ export default {
       this.fetchQualityData();
       this.startAutoRefresh();
     }
+    this.$nextTick(() => {
+      this.initChart();
+      window.addEventListener('resize', this.handleResize);
+    });
   },
   beforeUnmount() {
     this.stopAutoRefresh();
+    window.removeEventListener('resize', this.handleResize);
+    if (this.chart) {
+      this.chart.dispose();
+    }
   }
 }
 </script>
@@ -725,6 +1013,56 @@ export default {
   color: #999;
   font-size: 14px;
   background-color: #f8f9fa;
+  border: 1px solid #ebeef5;
+}
+
+/* 图表控制器样式 */
+.chart-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 8px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.time-selector,
+.chart-type-selector {
+  display: flex;
+  gap: 4px;
+}
+
+.time-btn,
+.chart-type-btn {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  color: #666;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.time-btn:hover,
+.chart-type-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.time-btn.active,
+.chart-type-btn.active {
+  background-color: #45b97c;
+  color: #fff;
+  border-color: #45b97c;
+}
+
+/* 图表容器样式 */
+.price-chart {
+  width: 100%;
+  height: 400px;
+  background-color: #fff;
+  border-radius: 4px;
   border: 1px solid #ebeef5;
 }
 </style>
