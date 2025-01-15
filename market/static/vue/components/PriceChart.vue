@@ -109,29 +109,35 @@ export default {
                 color: '#45b97c',
                 width: 1,
                 type: 'dashed'
-              },
-              label: {
-                show: true,
-                precision: 3
               }
             },
-            triggerOn: 'mousemove',
-            showDelay: 0,
-            hideDelay: 0,
-            enterable: false,
-            confine: true,
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            borderColor: '#eee',
-            borderWidth: 1,
-            textStyle: {
-              color: '#333',
-              fontSize: 12
-            },
-            padding: [8, 12],
-            position: function (pos, params, el, elRect, size) {
-              const obj = {top: 10};
-              obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 60;
-              return obj;
+            formatter: (params) => {
+              const date = new Date(params[0].data[0]);
+              let res = `<div style="font-weight: bold; margin-bottom: 8px;">
+                ${date.toLocaleString('zh-CN', {
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false
+                })}
+              </div>`;
+              
+              params.forEach(param => {
+                const color = param.color || '#45b97c';
+                const value = param.seriesName === '价格' 
+                  ? this.formatPrice(param.data[1])
+                  : param.data[1].toLocaleString();
+                
+                res += `<div style="display: flex; justify-content: space-between; align-items: center; margin: 4px 0;">
+                  <span style="color: ${color};">●</span>
+                  <span style="margin: 0 12px;">${param.seriesName}:</span>
+                  <span style="font-family: Monaco, monospace; font-weight: ${param.seriesName === '价格' ? 'bold' : 'normal'};">
+                    ${value}
+                  </span>
+                </div>`;
+              });
+              return res;
             }
           },
           grid: [{
@@ -248,14 +254,13 @@ export default {
               axisPointer: {
                 show: true,
                 snap: false,
-                triggerTooltip: false,
-                status: true,
                 label: {
                   show: true,
-                  formatter: (params) => this.formatPrice(params.value),
+                  formatter: (params) => `价格: ${this.formatPrice(params.value)}`,
                   padding: [4, 8],
                   backgroundColor: 'rgba(69, 185, 124, 0.9)',
-                  color: '#fff'
+                  color: '#fff',
+                  borderRadius: 4
                 }
               }
             },
@@ -280,14 +285,13 @@ export default {
               axisPointer: {
                 show: true,
                 snap: false,
-                triggerTooltip: false,
-                status: true,
                 label: {
                   show: true,
-                  formatter: (params) => params.value.toLocaleString(),
+                  formatter: (params) => `成交量: ${params.value.toLocaleString()}`,
                   padding: [4, 8],
                   backgroundColor: 'rgba(69, 185, 124, 0.9)',
-                  color: '#fff'
+                  color: '#fff',
+                  borderRadius: 4
                 }
               }
             }
@@ -337,34 +341,12 @@ export default {
               sampling: 'none',
               connectNulls: false,
               label: {
-                show: true,
-                position: 'right',
-                distance: 10,
-                formatter: (params) => this.formatPrice(params.value[1]),
-                color: '#45b97c',
-                fontSize: 12,
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                padding: [4, 8],
-                borderRadius: 4,
-                borderColor: '#45b97c',
-                borderWidth: 1
+                show: false
               },
               emphasis: {
                 scale: true,
                 focus: 'series',
-                blurScope: 'coordinateSystem',
-                label: {
-                  show: true,
-                  position: 'top',
-                  formatter: (params) => this.formatPrice(params.value[1]),
-                  color: '#45b97c',
-                  fontSize: 12,
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                  padding: [4, 8],
-                  borderRadius: 4,
-                  borderColor: '#45b97c',
-                  borderWidth: 1
-                }
+                blurScope: 'coordinateSystem'
               },
               lineStyle: { 
                 width: 2,
@@ -400,36 +382,7 @@ export default {
               barWidth: '70%',
               barGap: '0%',
               label: {
-                show: true,
-                position: 'right',
-                distance: 10,
-                formatter: (params) => params.value[1].toLocaleString(),
-                color: '#45b97c',
-                fontSize: 12,
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                padding: [4, 8],
-                borderRadius: 4,
-                borderColor: '#45b97c',
-                borderWidth: 1
-              },
-              emphasis: {
-                itemStyle: {
-                  color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                    { offset: 0, color: 'rgba(69, 185, 124, 0.9)' },
-                    { offset: 1, color: 'rgba(69, 185, 124, 0.4)' }
-                  ])
-                },
-                label: {
-                  show: true,
-                  position: 'top',
-                  distance: 4,
-                  color: '#45b97c',
-                  fontSize: 11,
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                  padding: [2, 4],
-                  borderRadius: 2,
-                  formatter: (params) => params.value[1].toLocaleString()
-                }
+                show: false
               }
             }
           ]
