@@ -97,6 +97,18 @@ export default {
       try {
         const data = await this.fetchHistoryData();
         
+        const formattedData = data.map(item => ({
+          time: item.time,
+          price: parseFloat(item.price),
+          volume: item.volume
+        })).filter(item => (
+          item.time > 0 &&
+          !isNaN(item.price) &&
+          !isNaN(item.volume) &&
+          item.price >= 0 &&
+          item.volume >= 0
+        ));
+
         const option = {
           backgroundColor: '#fff',
           animation: false,
@@ -104,37 +116,46 @@ export default {
             trigger: 'axis',
             axisPointer: {
               type: 'cross',
-              animation: false,
               snap: true,
+              animation: false,
               crossStyle: {
-                color: '#ff7f50',
+                color: '#999',
                 width: 1,
                 type: 'dashed'
               },
               label: {
                 show: true,
-                backgroundColor: '#ff7f50',
+                backgroundColor: '#505765',
                 color: '#fff',
                 formatter: function (params) {
                   if (params.axisDimension === 'y') {
-                    return '';  // 横线不显示标签
+                    if (params.axisIndex === 0) {
+                      return `价格: ${Number(params.value).toFixed(3)}`;
+                    }
+                    if (params.axisIndex === 1) {
+                      return `成交量: ${Math.round(params.value).toLocaleString()}`;
+                    }
                   }
-                  // 竖线上显示标签
-                  if (params.axisIndex === 0) {
-                    return `价格 Q0 ${Number(params.value).toFixed(3)}`;
-                  }
-                  if (params.axisIndex === 1) {
-                    return `成交量: ${Number(params.value).toLocaleString()}`;
-                  }
-                  return '';
+                  return '';  // x轴不显示标签
                 }
               }
+            },
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            borderWidth: 1,
+            borderColor: '#ccc',
+            padding: [10, 10],
+            textStyle: {
+              color: '#000',
+              fontSize: 12
             }
           },
           axisPointer: {
             link: [{
               xAxisIndex: 'all'
-            }]
+            }],
+            label: {
+              backgroundColor: '#505765'
+            }
           },
           grid: [{
             left: 80,
@@ -182,10 +203,7 @@ export default {
                 }
               },
               axisPointer: {
-                show: true,
-                label: {
-                  show: false
-                }
+                show: true
               }
             },
             {
@@ -214,56 +232,28 @@ export default {
             {
               scale: true,
               position: 'left',
-              axisLine: { 
-                show: true,
-                lineStyle: { 
-                  color: '#ddd',
-                  width: 1
-                }
-              },
               splitLine: { 
-                show: true, 
-                lineStyle: { 
+                show: true,
+                lineStyle: {
                   color: '#f5f5f5',
-                  width: 1,
-                  type: 'solid'
+                  type: 'dashed'
                 }
               },
               axisLabel: {
                 color: '#999',
                 fontSize: 11,
                 formatter: (value) => this.formatPrice(value)
-              },
-              axisPointer: {
-                show: true,
-                label: {
-                  show: false
-                }
               }
             },
             {
               scale: true,
               gridIndex: 1,
               position: 'left',
-              axisLine: { 
-                show: true,
-                lineStyle: { 
-                  color: '#ddd',
-                  width: 1
-                }
-              },
-              axisTick: { show: false },
               splitLine: { show: false },
               axisLabel: {
                 color: '#999',
                 fontSize: 11,
-                formatter: (value) => value.toLocaleString()
-              },
-              axisPointer: {
-                show: true,
-                label: {
-                  show: false
-                }
+                formatter: (value) => Math.round(value).toLocaleString()
               }
             }
           ],
@@ -303,7 +293,7 @@ export default {
             {
               name: '价格',
               type: 'line',
-              data: data.map(item => [item.time, item.price]),
+              data: formattedData.map(item => [item.time, item.price]),
               smooth: false,
               symbol: 'circle',
               symbolSize: 6,
@@ -336,7 +326,7 @@ export default {
               type: 'bar',
               xAxisIndex: 1,
               yAxisIndex: 1,
-              data: data.map(item => [item.time, item.volume]),
+              data: formattedData.map(item => [item.time, item.volume]),
               label: {
                 show: false
               },
@@ -355,7 +345,7 @@ export default {
 
         this.chart.setOption(option);
       } catch (err) {
-        console.error('Error updating chart:', err);
+        console.error('图表数据处理错误:', err);
       }
     },
     async fetchHistoryData() {
