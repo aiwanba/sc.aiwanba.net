@@ -104,17 +104,21 @@ export default {
             axisPointer: {
               type: 'cross',
               animation: false,
-              snap: true,
-              lineStyle: {
-                color: '#45b97c',
-                width: 1
-              },
+              snap: false,
               crossStyle: {
                 color: '#45b97c',
                 width: 1,
                 type: 'dashed'
-              }
+              },
+              link: [{
+                xAxisIndex: 'all'
+              }]
             },
+            triggerOn: 'mousemove',
+            showDelay: 0,
+            hideDelay: 0,
+            enterable: false,
+            confine: true,
             backgroundColor: 'rgba(255, 255, 255, 0.95)',
             borderColor: '#eee',
             borderWidth: 1,
@@ -168,6 +172,11 @@ export default {
             top: '75%',
             height: '15%'
           }],
+          axisPointer: {
+            link: [{
+              xAxisIndex: 'all'
+            }]
+          },
           xAxis: [
             {
               type: 'time',
@@ -200,6 +209,24 @@ export default {
                   } else {
                     return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
                   }
+                }
+              },
+              axisPointer: {
+                snap: false,
+                lineStyle: {
+                  color: '#45b97c',
+                  width: 1
+                },
+                label: {
+                  show: true,
+                  formatter: function (params) {
+                    return new Date(params.value).toLocaleTimeString('zh-CN', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false
+                    });
+                  },
+                  backgroundColor: '#45b97c'
                 }
               }
             },
@@ -242,6 +269,16 @@ export default {
                 color: '#999',
                 fontSize: 11,
                 formatter: (value) => this.formatPrice(value)
+              },
+              axisPointer: {
+                snap: false,
+                label: {
+                  show: true,
+                  formatter: function (params) {
+                    return params.value.toFixed(3);
+                  },
+                  backgroundColor: '#45b97c'
+                }
               }
             },
             {
@@ -303,15 +340,17 @@ export default {
               data: data.map(item => [item.time, item.price]),
               smooth: false,
               symbol: 'circle',
-              symbolSize: 4,
+              symbolSize: 6,
               showSymbol: false,
+              showAllSymbol: 'auto',
               sampling: 'none',
               connectNulls: false,
               emphasis: {
                 scale: true,
                 focus: 'series',
+                blurScope: 'coordinateSystem',
                 itemStyle: {
-                  symbolSize: 6,
+                  symbolSize: 8,
                   borderWidth: 2,
                   borderColor: '#fff',
                   shadowBlur: 10,
