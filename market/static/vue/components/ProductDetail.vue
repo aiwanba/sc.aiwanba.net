@@ -161,23 +161,6 @@
                       {{ period.label }}
                     </button>
                   </div>
-                  <!-- 图表类型切换 -->
-                  <div class="chart-type-selector">
-                    <button 
-                      v-for="type in chartTypes" 
-                      :key="type.value"
-                      :class="[
-                        'chart-type-btn', 
-                        { 
-                          'active': currentChartType === type.value,
-                          'disabled': type.value !== 'line' && !type.isActivated
-                        }
-                      ]"
-                      @click="handleChartTypeClick(type)"
-                    >
-                      {{ type.label }}
-                    </button>
-                  </div>
                 </div>
                 <!-- 图表容器 -->
                 <div ref="priceChart" class="price-chart"></div>
@@ -207,7 +190,6 @@ export default {
       lastUpdateTime: null,
       // 图表相关数据
       currentPeriod: '1d',
-      currentChartType: 'line',
       currentQuality: 0, // 当前选中的品质等级
       chart: null,
       qualities: Array.from({ length: 13 }, (_, i) => ({
@@ -219,10 +201,6 @@ export default {
         { label: '1小时', value: '1h', isActivated: false },
         { label: '1天', value: '1d', isActivated: true },
         { label: '1个月', value: '1m', isActivated: false }
-      ],
-      chartTypes: [
-        { label: '蜡烛图', value: 'candlestick', isActivated: false },
-        { label: '折线图', value: 'line', isActivated: true }
       ]
     }
   },
@@ -376,10 +354,6 @@ export default {
       this.currentPeriod = period;
       this.updateChart();
     },
-    changeChartType(type) {
-      this.currentChartType = type;
-      this.updateChart();
-    },
     initChart() {
       if (this.chart) {
         this.chart.dispose();
@@ -520,7 +494,7 @@ export default {
           series: [
             {
               name: '价格',
-              type: this.currentChartType === 'candlestick' ? 'candlestick' : 'line',
+              type: 'line',
               data: data.map(item => [item.time, item.price]),
               smooth: true,
               symbol: 'none',
@@ -600,18 +574,6 @@ export default {
         // 激活该时间周期
         period.isActivated = true;
         this.currentPeriod = period.value;
-        this.updateChart();
-      }
-    },
-    // 图表类型切换方法
-    handleChartTypeClick(type) {
-      if (type.value === 'line' || type.isActivated) {
-        this.currentChartType = type.value;
-        this.updateChart();
-      } else {
-        // 激活该图表类型
-        type.isActivated = true;
-        this.currentChartType = type.value;
         this.updateChart();
       }
     }
@@ -1116,15 +1078,13 @@ export default {
   }
 }
 
-/* 时间周期和图表类型选择器样式 */
-.time-selector,
-.chart-type-selector {
+/* 时间周期选择器样式 */
+.time-selector {
   display: flex;
   gap: 4px;
 }
 
-.time-btn,
-.chart-type-btn {
+.time-btn {
   padding: 4px 8px;
   border: 1px solid #ddd;
   background-color: #fff;
@@ -1135,20 +1095,17 @@ export default {
   transition: all 0.2s;
 }
 
-.time-btn:hover:not(.disabled),
-.chart-type-btn:hover:not(.disabled) {
+.time-btn:hover:not(.disabled) {
   background-color: #f0f0f0;
 }
 
-.time-btn.active,
-.chart-type-btn.active {
+.time-btn.active {
   background-color: #45b97c;
   color: #fff;
   border-color: #45b97c;
 }
 
-.time-btn.disabled,
-.chart-type-btn.disabled {
+.time-btn.disabled {
   background-color: #f5f5f5;
   color: #999;
   cursor: pointer;
