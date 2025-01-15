@@ -288,3 +288,4 @@
 3. 索引使用：
    - 主要查询应该围绕posted_time和seller_id
    - batch_id的基数较小，适合批量操作
+

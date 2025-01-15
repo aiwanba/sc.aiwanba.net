@@ -78,8 +78,8 @@
               <div class="section-header">商品品质</div>
               <div class="section-content">
                 <div v-if="loading" class="loading-state">加载中...</div>
-                <div v-else-if="error" class="error-state">{{ error }}</div>
-                <table v-else class="info-table">
+                <div v-if="error" class="error-state">{{ error }}</div>
+                <table class="info-table">
                   <thead>
                     <tr>
                       <th class="info-header">品质等级</th>
@@ -91,13 +91,18 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="item in qualityData" :key="item.quality">
-                      <td class="info-label">Q{{ item.quality }}</td>
-                      <td class="info-value price">{{ item.latestPrice }}</td>
-                      <td class="info-value price">{{ item.lowestPrice }}</td>
-                      <td class="info-value price">{{ item.highestPrice }}</td>
-                      <td class="info-value price">{{ item.averagePrice }}</td>
-                      <td class="info-value time">{{ item.updateTime }}</td>
+                    <template v-if="qualityData && qualityData.length > 0">
+                      <tr v-for="item in qualityData" :key="item.quality">
+                        <td class="info-label">Q{{ item.quality }}</td>
+                        <td class="info-value price">{{ item.latestPrice }}</td>
+                        <td class="info-value price">{{ item.lowestPrice }}</td>
+                        <td class="info-value price">{{ item.highestPrice }}</td>
+                        <td class="info-value price">{{ item.averagePrice }}</td>
+                        <td class="info-value time">{{ item.updateTime }}</td>
+                      </tr>
+                    </template>
+                    <tr v-else>
+                      <td colspan="6" class="no-data">暂无数据</td>
                     </tr>
                   </tbody>
                 </table>
@@ -160,20 +165,45 @@ export default {
       this.loading = true;
       this.error = null;
       try {
-        const response = await fetch(`/market/api/v1/market/quality/${this.serverType}/${this.productId}`);
+        console.log('Fetching data for server:', this.serverType, 'product:', this.productId);
+        const response = await fetch(`/market/api/v1/market/quality/${this.serverType}/${this.productId}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('Response status:', response.status);
+        const contentType = response.headers.get('content-type');
+        console.log('Response content-type:', contentType);
+        
         if (!response.ok) {
-          throw new Error('获取数据失败');
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
+          throw new Error(`获取数据失败: ${response.status} ${errorText}`);
         }
+
         const data = await response.json();
+        console.log('Received data:', data);
+        
         if (data.code === 0) {
           this.qualityData = this.processQualityData(data.data);
-          this.lastUpdateTime = new Date().toLocaleString();
+          this.lastUpdateTime = new Date().toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          });
         } else {
           throw new Error(data.message || '获取数据失败');
         }
       } catch (err) {
+        console.error('Error details:', err);
         this.error = err.message;
-        console.error('获取品质数据错误:', err);
       } finally {
         this.loading = false;
       }
@@ -217,7 +247,8 @@ export default {
       return new Date(time).toLocaleTimeString('zh-CN', {
         hour: '2-digit',
         minute: '2-digit',
-        second: '2-digit'
+        second: '2-digit',
+        hour12: false
       });
     },
     startAutoRefresh() {
@@ -449,49 +480,49 @@ export default {
   border-radius: 4px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
 }
 
-.info-table td, .info-table th {
-  padding: 4px 6px;
+.info-table th {
+  background-color: #f8f9fa;
+  padding: 8px;
+  font-weight: bold;
+  text-align: center;
   border: 1px solid #ebeef5;
-  font-size: 11px;
-  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.info-table td {
+  padding: 8px;
+  border: 1px solid #ebeef5;
   text-align: center;
 }
 
-.info-table th.info-header {
-  background-color: #f8f9fa;
+.info-table .info-header {
   color: #333;
-  font-weight: bold;
-  white-space: nowrap;
-  font-size: 11px;
-  padding: 4px 4px;
+  font-size: 12px;
 }
 
 .info-table .info-label {
-  width: 60px;
-  color: #666;
-  font-size: 11px;
   background-color: #f8f9fa;
-  text-align: center;
+  color: #666;
+  font-size: 12px;
 }
 
 .info-table .info-value {
   color: #333;
-  font-size: 11px;
-  text-align: center;
+  font-size: 12px;
 }
 
 .info-table .info-value.price {
   font-family: Monaco, monospace;
   color: #45b97c;
-  font-size: 11px;
 }
 
 .info-table .info-value.time {
   font-family: Monaco, monospace;
   color: #666;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 /* 表格行悬停效果 */
@@ -627,21 +658,34 @@ export default {
 
 .loading-state,
 .error-state {
-  padding: 20px;
+  padding: 10px;
   text-align: center;
-  color: #666;
-  background-color: #f8f9fa;
+  margin-bottom: 10px;
   border-radius: 4px;
 }
 
+.loading-state {
+  background-color: #f8f9fa;
+  color: #666;
+}
+
 .error-state {
+  background-color: #fff2f0;
   color: #dc3545;
 }
 
 .update-time {
-  margin-top: 8px;
   text-align: right;
   font-size: 11px;
   color: #666;
+  margin-top: 4px;
+}
+
+/* 添加无数据样式 */
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-size: 14px;
 }
 </style>

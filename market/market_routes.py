@@ -1,8 +1,12 @@
-from flask import Blueprint, render_template, jsonify
+from flask import Blueprint, render_template, jsonify, current_app
+from flask_cors import CORS
 from models.database import Database
+import traceback
 
 # 创建市场蓝图
 market_bp = Blueprint('market', __name__, url_prefix='/market')
+# 启用CORS
+CORS(market_bp)  # 简化CORS配置，允许所有来源
 
 @market_bp.route('/')
 def index():
@@ -18,14 +22,18 @@ def product_detail(server_type, product_id):
 def get_quality_prices(server_type, product_id):
     """获取商品各品质等级的价格数据"""
     try:
+        current_app.logger.info(f"接收请求 - server_type: {server_type}, product_id: {product_id}")
+        
         db = Database()
         with db.conn.cursor() as cursor:
-            # 构建查询SQL
+            # 构建查询SQL，使用 CONVERT_TZ 函数进行时区转换
             sql = """
             WITH today_data AS (
-                SELECT *
+                SELECT 
+                    *,
+                    CONVERT_TZ(posted_time, '+00:00', '+08:00') as local_time
                 FROM market_{0}_{1}
-                WHERE DATE(posted_time) = CURDATE()
+                WHERE DATE(CONVERT_TZ(posted_time, '+00:00', '+08:00')) = CURDATE()
             )
             SELECT 
                 m.quality,
@@ -33,7 +41,7 @@ def get_quality_prices(server_type, product_id):
                     SELECT price 
                     FROM today_data t1
                     WHERE t1.quality = m.quality
-                    ORDER BY posted_time DESC 
+                    ORDER BY t1.local_time DESC
                     LIMIT 1
                 ) as latest_price,
                 (
@@ -52,10 +60,10 @@ def get_quality_prices(server_type, product_id):
                 ) as highest_price,
                 AVG(price) as average_price,
                 (
-                    SELECT posted_time
+                    SELECT local_time
                     FROM today_data t4
                     WHERE t4.quality = m.quality
-                    ORDER BY posted_time DESC
+                    ORDER BY t4.local_time DESC
                     LIMIT 1
                 ) as update_time
             FROM 
@@ -66,8 +74,14 @@ def get_quality_prices(server_type, product_id):
                 m.quality ASC;
             """.format(server_type, product_id)
 
+            current_app.logger.info(f"执行SQL查询")
             cursor.execute(sql)
             results = cursor.fetchall()
+
+            # 添加日志输出
+            current_app.logger.info(f"查询结果数量: {len(results)}")
+            if len(results) > 0:
+                current_app.logger.info(f"第一条记录: {results[0]}")
 
             # 处理查询结果
             quality_data = []
@@ -81,15 +95,21 @@ def get_quality_prices(server_type, product_id):
                     'update_time': row['update_time'].strftime('%Y-%m-%d %H:%M:%S') if row['update_time'] else None
                 })
 
-            return jsonify({
+            response = jsonify({
                 'code': 0,
                 'message': 'success',
                 'data': quality_data
             })
+            response.headers['Content-Type'] = 'application/json'
+            return response
 
     except Exception as e:
-        return jsonify({
+        current_app.logger.error(f"处理请求出错: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
+        response = jsonify({
             'code': 500,
             'message': str(e),
             'data': None
-        }), 500 
+        })
+        response.headers['Content-Type'] = 'application/json'
+        return response, 500 
