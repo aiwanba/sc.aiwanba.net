@@ -94,16 +94,23 @@
                     <template v-if="qualityData && qualityData.length > 0">
                       <tr v-for="item in qualityData" :key="item.quality">
                         <td class="info-label">Q{{ item.quality }}</td>
-                        <td class="info-value price">{{ item.latestPrice }}</td>
-                        <td class="info-value price">{{ item.lowestPrice }}</td>
-                        <td class="info-value price">{{ item.highestPrice }}</td>
-                        <td class="info-value price">{{ item.averagePrice }}</td>
-                        <td class="info-value time">{{ item.updateTime }}</td>
+                        <td class="info-value price">{{ item.latestPrice || '-' }}</td>
+                        <td class="info-value price">{{ item.lowestPrice || '-' }}</td>
+                        <td class="info-value price">{{ item.highestPrice || '-' }}</td>
+                        <td class="info-value price">{{ item.averagePrice || '-' }}</td>
+                        <td class="info-value time">{{ item.updateTime || '-' }}</td>
                       </tr>
                     </template>
-                    <tr v-else>
-                      <td colspan="6" class="no-data">暂无数据</td>
-                    </tr>
+                    <template v-else>
+                      <tr v-for="i in 13" :key="i-1">
+                        <td class="info-label">Q{{ i-1 }}</td>
+                        <td class="info-value price">-</td>
+                        <td class="info-value price">-</td>
+                        <td class="info-value price">-</td>
+                        <td class="info-value price">-</td>
+                        <td class="info-value time">-</td>
+                      </tr>
+                    </template>
                   </tbody>
                 </table>
                 <div v-if="lastUpdateTime" class="update-time">
@@ -481,17 +488,10 @@ export default {
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-bottom: 10px;
-}
-
-.info-table th {
-  background-color: #f8f9fa;
-  padding: 8px;
-  font-weight: bold;
-  text-align: center;
   border: 1px solid #ebeef5;
-  white-space: nowrap;
 }
 
+.info-table th,
 .info-table td {
   padding: 8px;
   border: 1px solid #ebeef5;
@@ -501,28 +501,35 @@ export default {
 .info-table .info-header {
   color: #333;
   font-size: 12px;
+  background-color: #f8f9fa;
+  border: 1px solid #ebeef5;
+  font-weight: bold;
 }
 
 .info-table .info-label {
   background-color: #f8f9fa;
   color: #666;
   font-size: 12px;
+  border: 1px solid #ebeef5;
 }
 
 .info-table .info-value {
   color: #333;
   font-size: 12px;
+  border: 1px solid #ebeef5;
 }
 
 .info-table .info-value.price {
   font-family: Monaco, monospace;
   color: #45b97c;
+  border: 1px solid #ebeef5;
 }
 
 .info-table .info-value.time {
   font-family: Monaco, monospace;
   color: #666;
   font-size: 11px;
+  border: 1px solid #ebeef5;
 }
 
 /* 表格行悬停效果 */
@@ -687,5 +694,7 @@ export default {
   padding: 20px;
   color: #999;
   font-size: 14px;
+  background-color: #f8f9fa;
+  border: 1px solid #ebeef5;
 }
 </style>
