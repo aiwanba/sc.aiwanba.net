@@ -111,6 +111,11 @@ export default {
                 type: 'dashed'
               }
             },
+            position: function (pos, params, el, elRect, size) {
+              const obj = { top: 10 };
+              obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 30;
+              return obj;
+            },
             formatter: (params) => {
               const date = new Date(params[0].data[0]);
               let res = `<div style="font-weight: bold; margin-bottom: 8px;">
@@ -253,14 +258,11 @@ export default {
               },
               axisPointer: {
                 show: true,
-                snap: false,
                 label: {
                   show: true,
-                  formatter: (params) => `价格: ${this.formatPrice(params.value)}`,
-                  padding: [4, 8],
-                  backgroundColor: 'rgba(69, 185, 124, 0.9)',
-                  color: '#fff',
-                  borderRadius: 4
+                  precision: 3,
+                  formatter: '{value}',
+                  backgroundColor: '#45b97c'
                 }
               }
             },
@@ -284,14 +286,10 @@ export default {
               },
               axisPointer: {
                 show: true,
-                snap: false,
                 label: {
                   show: true,
-                  formatter: (params) => `成交量: ${params.value.toLocaleString()}`,
-                  padding: [4, 8],
-                  backgroundColor: 'rgba(69, 185, 124, 0.9)',
-                  color: '#fff',
-                  borderRadius: 4
+                  formatter: '{value}',
+                  backgroundColor: '#45b97c'
                 }
               }
             }
