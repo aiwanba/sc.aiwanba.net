@@ -5,7 +5,6 @@
     <div class="section-content">
       <!-- 图表控制器 -->
       <div class="chart-controls">
-        <!-- 品质等级选择 -->
         <div class="quality-selector">
           <button 
             v-for="q in qualities" 
@@ -22,7 +21,6 @@
             {{ q.label }}
           </button>
         </div>
-        <!-- 时间周期选择 -->
         <div class="time-selector">
           <button 
             v-for="period in timePeriods" 
@@ -41,11 +39,13 @@
         </div>
       </div>
       <!-- 图表容器 -->
-      <div class="price-section">
-        <div ref="priceChartContainer" class="chart"></div>
-      </div>
-      <div class="volume-section">
-        <div ref="volumeChartContainer" class="chart"></div>
+      <div class="charts-container">
+        <div class="price-chart">
+          <div ref="priceChartContainer"></div>
+        </div>
+        <div class="volume-chart">
+          <div ref="volumeChartContainer"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -216,10 +216,7 @@ export default {
     },
 
     initCharts() {
-      // 初始化价格图表
-      this.priceChart = createChart(this.$refs.priceChartContainer, {
-        width: this.$refs.priceChartContainer.clientWidth,
-        height: 300,
+      const commonOptions = {
         layout: {
           backgroundColor: '#ffffff',
           textColor: '#333',
@@ -228,52 +225,60 @@ export default {
           vertLines: { color: '#f0f0f0' },
           horzLines: { color: '#f0f0f0' },
         },
-        crosshair: {
-          mode: 1,
-          vertLine: {
-            width: 1,
-            color: '#999',
-            style: 2,
-          },
-          horzLine: {
-            width: 1,
-            color: '#999',
-            style: 2,
-          }
-        },
         timeScale: {
           borderColor: '#ddd',
           timeVisible: true,
-          secondsVisible: false
+          secondsVisible: false,
+          rightOffset: 0,
+          barSpacing: 6,
+          fixLeftEdge: true,
+          fixRightEdge: true,
+          rightBarStaysOnScroll: true,
+          tickMarkFormatter: (time) => {
+            const date = new Date(time * 1000);
+            return date.getHours().toString().padStart(2, '0') + ':' + 
+                   date.getMinutes().toString().padStart(2, '0');
+          }
+        }
+      };
+
+      // 初始化价格图表
+      this.priceChart = createChart(this.$refs.priceChartContainer, {
+        ...commonOptions,
+        width: this.$refs.priceChartContainer.clientWidth,
+        height: 400,
+        leftPriceScale: {
+          visible: true,
+          borderColor: '#ddd',
+          scaleMargins: {
+            top: 0.1,
+            bottom: 0.1,
+          }
         },
         rightPriceScale: {
-          borderColor: '#ddd',
+          visible: false
         }
       });
 
       // 初始化成交量图表
       this.volumeChart = createChart(this.$refs.volumeChartContainer, {
+        ...commonOptions,
         width: this.$refs.volumeChartContainer.clientWidth,
         height: 200,
-        layout: {
-          backgroundColor: '#ffffff',
-          textColor: '#333',
-        },
-        grid: {
-          vertLines: { color: '#f0f0f0' },
-          horzLines: { color: '#f0f0f0' },
-        },
-        timeScale: {
+        leftPriceScale: {
+          visible: true,
           borderColor: '#ddd',
-          timeVisible: true,
-          secondsVisible: false
+          scaleMargins: {
+            top: 0.1,
+            bottom: 0.1,
+          }
         },
         rightPriceScale: {
-          borderColor: '#ddd',
+          visible: false
         }
       });
 
-      // 添加数据系列
+      // 添加价格数据系列
       this.priceSeries = this.priceChart.addLineSeries({
         color: '#ff7f50',
         lineWidth: 2,
@@ -283,13 +288,32 @@ export default {
           precision: 3,
           minMove: 0.001,
         },
+        lastValueVisible: true,
+        priceLineVisible: false,
+        priceScaleId: 'left'
       });
 
+      // 添加成交量数据系列
       this.volumeSeries = this.volumeChart.addHistogramSeries({
         color: '#808080',
         priceFormat: {
           type: 'volume',
+          precision: 0,
         },
+        lastValueVisible: true,
+        priceLineVisible: false,
+        priceScaleId: 'left'
+      });
+
+      // 同步时间轴
+      this.priceChart.timeScale().subscribeVisibleTimeRangeChange(() => {
+        const timeRange = this.priceChart.timeScale().getVisibleRange();
+        this.volumeChart.timeScale().setVisibleRange(timeRange);
+      });
+
+      this.volumeChart.timeScale().subscribeVisibleTimeRangeChange(() => {
+        const timeRange = this.volumeChart.timeScale().getVisibleRange();
+        this.priceChart.timeScale().setVisibleRange(timeRange);
       });
 
       this.updateCharts();
@@ -391,5 +415,33 @@ export default {
 .time-btn.disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.charts-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.price-chart {
+  flex: 2;
+  min-height: 400px;
+  background-color: #fff;
+}
+
+.volume-chart {
+  flex: 1;
+  min-height: 200px;
+  background-color: #fff;
+}
+
+.price-chart > div,
+.volume-chart > div {
+  width: 100%;
+  height: 100%;
 }
 </style> 
