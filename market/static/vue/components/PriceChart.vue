@@ -10,17 +10,22 @@
             <button 
               v-for="q in qualities" 
               :key="q.value"
-              :class="[
-                'quality-btn', 
-                { 
-                  'active': currentQuality === q.value,
-                  'disabled': q.value > 0 && !q.isActivated
-                }
-              ]"
+              :class="['quality-btn', { 'active': currentQuality === q.value, 'disabled': q.value > 0 && !q.isActivated }]"
               @click="handleQualityClick(q)"
             >
               {{ q.label }}
             </button>
+          </div>
+        </div>
+        <div class="controls-center">
+          <div class="tooltip-label">价格提示框:</div>
+          <div v-if="hoveredData" class="price-tooltip">
+            <div>价格: {{ hoveredData.price }}</div>
+            <div>成交量: {{ hoveredData.volume }}</div>
+            <div>时间: {{ hoveredData.time }}</div>
+          </div>
+          <div v-else class="price-tooltip empty-tooltip">
+            --
           </div>
         </div>
         <div class="controls-right">
@@ -45,7 +50,7 @@
       <!-- 图表容器 -->
       <div class="charts-container">
         <div class="price-chart">
-          <div ref="priceChartContainer"></div>
+          <div ref="priceChartContainer" class="chart-container-wrapper"></div>
         </div>
         <div class="volume-chart">
           <div ref="volumeChartContainer"></div>
@@ -111,6 +116,11 @@ export default {
         { label: '1月', value: '1m', isActivated: false }
       ],
       productName: '电力',
+      hoveredData: null,
+      tooltipStyle: {
+        left: '0px',
+        top: '0px'
+      }
     }
   },
   watch: {
@@ -298,6 +308,18 @@ export default {
         this.priceSeries.setData(priceData);
         this.volumeSeries.setData(volumeData);
 
+        // 为所有数据点添加标记
+        const markers = priceData.map(point => ({
+          time: point.time,
+          position: 'aboveBar',
+          color: '#45b97c',
+          shape: 'circle',
+          text: point.value.toFixed(3),
+          size: 0.5  // 减小标记的大小
+        }));
+
+        this.priceSeries.setMarkers(markers);
+
         console.log('图表数据更新完成');
 
         // 同步两个图表的时间轴
@@ -435,7 +457,7 @@ export default {
         return {
           color: '#ff7f50',
           lineWidth: 1,
-          priceLineVisible: false,
+          priceLineVisible: true,
           lastValueVisible: true,
           crosshairMarkerVisible: true,
           // 确保使用左侧刻度
@@ -444,7 +466,22 @@ export default {
             type: 'price',
             precision: 3,
             minMove: 0.001
-          }
+          },
+          // 修改标记配置
+          markers: [],
+          // 数据点配置
+          pointsVisible: true,  // 显示所有数据点
+          pointSize: 2,  // 数据点大小
+          pointFillColor: '#45b97c',  // 数据点填充颜色
+          pointBorderColor: '#fff',  // 数据点边框颜色
+          pointBorderWidth: 1,  // 数据点边框宽度
+          // 价格线配置
+          priceLineVisible: true,
+          priceLineWidth: 1,
+          priceLineColor: '#45b97c',
+          priceLineStyle: 2,
+          // 动画
+          lastPriceAnimation: 1
         };
       }
 
@@ -462,7 +499,9 @@ export default {
             }
             return volume.toString();
           }
-        }
+        },
+        // 添加成交量标签配置
+        lastValueVisible: true
       };
     },
 
@@ -519,17 +558,93 @@ export default {
 
     // 抽取十字准星同步逻辑
     setupCrosshairSync() {
-      this.priceChart.subscribeCrosshairMove((param) => {
-        if (this.volumeChart && param && param.point) {
-          this.volumeChart.setCrosshairPosition(param.point, param.time || undefined);
-        }
-      });
+      // 创建统一的处理函数
+      const handleCrosshairMove = (param) => {
+        console.log('Crosshair Move Event:', param);
 
-      this.volumeChart.subscribeCrosshairMove((param) => {
-        if (this.priceChart && param && param.point) {
-          this.priceChart.setCrosshairPosition(param.point, param.time || undefined);
+        if (!param || !param.time) {
+          this.hoveredData = null;
+          return;
         }
-      });
+
+        try {
+          // 获取价格和成交量数据
+          const price = param.seriesPrices?.get(this.priceSeries);
+          const volume = param.seriesPrices?.get(this.volumeSeries);
+
+          // 获取当前时间点的数据
+          const seriesData = this.priceSeries.dataByIndex(param.logical - 1);
+          console.log('Series Data:', seriesData);
+
+          if (seriesData) {
+            const date = new Date(seriesData.time * 1000);
+            let timeStr;
+            
+            // 根据不同的时间周期显示不同的格式
+            if (this.currentPeriod === '1h') {
+              timeStr = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+            } else if (this.currentPeriod === '1d') {
+              timeStr = `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+            } else {
+              timeStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+            }
+
+            this.hoveredData = {
+              price: seriesData.value.toFixed(3),
+              volume: volume ? Math.round(volume).toLocaleString() : '0',
+              time: timeStr
+            };
+
+            console.log('Updated hoveredData:', this.hoveredData);
+          }
+        } catch (error) {
+          console.error('Error in handleCrosshairMove:', error);
+          this.hoveredData = null;
+        }
+      };
+
+      // 为两个图表添加事件监听
+      if (this.priceChart) {
+        this.priceChart.subscribeCrosshairMove(handleCrosshairMove);
+      }
+
+      if (this.volumeChart) {
+        this.volumeChart.subscribeCrosshairMove(handleCrosshairMove);
+      }
+
+      // 添加鼠标离开事件处理
+      const handleMouseLeave = () => {
+        console.log('Mouse Leave Event');
+        this.hoveredData = null;
+      };
+
+      // 为图表容器添加鼠标离开事件
+      const priceContainer = this.$refs.priceChartContainer;
+      const volumeContainer = this.$refs.volumeChartContainer;
+
+      if (priceContainer) {
+        priceContainer.addEventListener('mouseleave', handleMouseLeave);
+      }
+      if (volumeContainer) {
+        volumeContainer.addEventListener('mouseleave', handleMouseLeave);
+      }
+
+      // 保存事件处理函数引用
+      this._handleMouseLeave = handleMouseLeave;
+
+      // 同步两个图表的十字线
+      const syncCrosshair = (chart1, chart2) => {
+        if (chart1 && chart2) {
+          chart1.subscribeCrosshairMove((param) => {
+            if (param && param.point) {
+              chart2.setCrosshairPosition(param.point, param.time);
+            }
+          });
+        }
+      };
+
+      syncCrosshair(this.priceChart, this.volumeChart);
+      syncCrosshair(this.volumeChart, this.priceChart);
     },
 
     handleResize: debounce(function() {
@@ -556,9 +671,17 @@ export default {
       window.addEventListener('resize', this.handleResize);
     });
   },
-  beforeUnmount() {
+  beforeDestroy() {
     // 移除事件监听
     window.removeEventListener('resize', this.handleResize);
+    
+    // 移除鼠标离开事件监听
+    if (this._handleMouseLeave) {
+      this.$refs.priceChartContainer?.removeEventListener('mouseleave', this._handleMouseLeave);
+      this.$refs.volumeChartContainer?.removeEventListener('mouseleave', this._handleMouseLeave);
+    }
+    
+    // 清理图表实例
     if (this.priceChart) {
       this.priceChart.remove();
     }
@@ -636,9 +759,19 @@ export default {
 
 .controls-left,
 .controls-right {
+  flex: 1;
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.controls-center {
+  flex: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-width: 200px;
 }
 
 .quality-selector,
@@ -685,8 +818,10 @@ export default {
   }
 
   .controls-left,
+  .controls-center,
   .controls-right {
     justify-content: center;
+    width: 100%;
   }
 
   .quality-btn,
@@ -711,6 +846,49 @@ export default {
   
   .charts-container {
     height: calc(100vh - 350px);
+  }
+}
+
+.chart-container-wrapper {
+  position: relative;  /* 添加相对定位 */
+  width: 100%;
+  height: 100%;
+}
+
+.price-tooltip {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #333;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  white-space: nowrap;
+  min-width: 150px;
+}
+
+.empty-tooltip {
+  text-align: center;
+  color: #999;
+}
+
+.price-tooltip > div {
+  margin: 2px 0;
+}
+
+.tooltip-label {
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
+}
+
+/* 调整响应式布局 */
+@media screen and (max-width: 768px) {
+  .controls-center {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
   }
 }
 </style> 
