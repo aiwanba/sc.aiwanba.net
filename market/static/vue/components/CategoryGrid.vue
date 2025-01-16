@@ -43,12 +43,13 @@
       <div v-for="group in GROUP_ORDER" :key="group" class="product-group">
         <div class="group-header">{{ group }}</div>
         <div class="resources-grid">
-          <a v-for="id in PRODUCT_GROUPS[group]" 
-             :key="id"
-             :href="`/market/${serverType}/${id}`"
-             class="resource-item">
+          <router-link 
+            v-for="id in PRODUCT_GROUPS[group]" 
+            :key="id"
+            :to="`/market/${serverType}/${id}`"
+            class="resource-item">
             {{ PRODUCT_TYPES[id] }}
-          </a>
+          </router-link>
         </div>
       </div>
     </div>

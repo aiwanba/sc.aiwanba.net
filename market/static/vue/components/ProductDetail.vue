@@ -118,7 +118,7 @@ export default {
       serverType: parseInt(localStorage.getItem('serverType') || '0'),
       productId: null,
       currentQuality: 0,
-      currentPeriod: '1d',
+      currentPeriod: '1h',
       PRODUCT_TYPES
     }
   },
@@ -126,7 +126,7 @@ export default {
     switchServer(type) {
       this.serverType = type;
       localStorage.setItem('serverType', type.toString());
-      window.location.href = `/market/${type}/${this.productId}`;
+      this.$router.push(`/market/${type}/${this.productId}`);
     },
     getProductGroup() {
       for (const [group, products] of Object.entries(PRODUCT_GROUPS)) {
@@ -148,12 +148,10 @@ export default {
         this.productId = productId;
       } else {
         console.warn('无效的服务器类型或商品ID');
-        // 重定向到首页
-        window.location.href = '/market';
+        this.$router.push('/market');
       }
     } else {
-      // 路径不完整时重定向到首页
-      window.location.href = '/market';
+      this.$router.push('/market');
     }
   }
 }

@@ -29,7 +29,7 @@
               'time-btn', 
               { 
                 'active': currentPeriod === period.value,
-                'disabled': period.value !== '1d' && !period.isActivated
+                'disabled': period.value !== '1h' && !period.isActivated
               }
             ]"
             @click="handlePeriodClick(period)"
@@ -102,7 +102,7 @@ export default {
     quality: {
       handler(newVal) {
         this.currentQuality = newVal;
-        if (this.priceSeries && this.volumeSeries) {
+        if (newVal === 0 || this.qualities[newVal].isActivated) {
           this.updateCharts();
         }
       },
@@ -111,7 +111,7 @@ export default {
     period: {
       handler(newVal) {
         this.currentPeriod = newVal;
-        if (this.priceSeries && this.volumeSeries) {
+        if (newVal === '1h' || this.timePeriods.find(p => p.value === newVal).isActivated) {
           this.updateCharts();
         }
       },
@@ -166,7 +166,10 @@ export default {
     },
 
     handleQualityClick(quality) {
-      if (quality.value === 0 || quality.isActivated) {
+      if (quality.value === 0) {
+        this.currentQuality = quality.value;
+        this.updateCharts();
+      } else if (quality.isActivated) {
         this.currentQuality = quality.value;
         this.updateCharts();
       } else {
@@ -177,29 +180,29 @@ export default {
     },
 
     handlePeriodClick(period) {
-      console.log('切换时间周期:', period);
-      if (period.value === '1h' || period.isActivated) {
+      if (period.value === '1h') {
         this.currentPeriod = period.value;
-        console.log('设置新的时间周期:', this.currentPeriod);
+        this.updateCharts();
+      } else if (period.isActivated) {
+        this.currentPeriod = period.value;
         this.updateCharts();
       } else {
         period.isActivated = true;
         this.currentPeriod = period.value;
-        console.log('激活并设置新的时间周期:', this.currentPeriod);
         this.updateCharts();
       }
     },
 
     async updateCharts() {
       try {
+        // 等待图表初始化完成
         if (!this.priceSeries || !this.volumeSeries) {
-          console.warn('图表尚未初始化');
-          return;
+          await this.initCharts();  // 确保图表已初始化
         }
 
         if (!this.productId || isNaN(this.productId) || this.productId < 0) {
-          this.priceSeries.setData([]);
-          this.volumeSeries.setData([]);
+          this.priceSeries?.setData([]);
+          this.volumeSeries?.setData([]);
           return;
         }
 
@@ -282,10 +285,6 @@ export default {
       } catch (err) {
         console.error('图表数据更新错误:', err);
         console.error('错误堆栈:', err.stack);
-        if (this.priceSeries && this.volumeSeries) {
-          this.priceSeries.setData([]);
-          this.volumeSeries.setData([]);
-        }
       }
     },
 
@@ -410,7 +409,7 @@ export default {
           {
             ...this.createChartOptions('price'),
             width: this.$refs.priceChartContainer.clientWidth,
-            height: 400
+            height: 300
           }
         );
 
@@ -420,7 +419,7 @@ export default {
           {
             ...this.createChartOptions('volume'),
             width: this.$refs.volumeChartContainer.clientWidth,
-            height: 200
+            height: 150
           }
         );
 
@@ -509,22 +508,44 @@ export default {
   padding: 8px;
 }
 
-.price-section,
-.volume-section {
-  margin-bottom: 20px;
+.charts-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 450px;  /* 设置固定总高度 */
 }
 
-.chart {
+.price-chart {
+  flex: 2;
+  height: 300px;  /* 固定高度 */
+  background-color: #fff;
+  position: relative;
+  overflow: hidden;  /* 防止内容溢出 */
+}
+
+.volume-chart {
+  flex: 1;
+  height: 150px;  /* 固定高度 */
+  background-color: #fff;
+  position: relative;
+  overflow: hidden;  /* 防止内容溢出 */
+}
+
+.price-chart > div,
+.volume-chart > div {
   width: 100%;
   height: 100%;
-  min-height: 200px;
 }
 
-/* 添加图表控制器样式 */
+/* 图表控制器样式 */
 .chart-controls {
   display: flex;
   gap: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;  /* 减小底部间距 */
 }
 
 .quality-selector,
@@ -555,35 +576,5 @@ export default {
 .time-btn.disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.charts-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.price-chart {
-  flex: 2;
-  min-height: 400px;
-  background-color: #fff;
-  position: relative;
-}
-
-.volume-chart {
-  flex: 1;
-  min-height: 200px;
-  background-color: #fff;
-  position: relative;
-}
-
-.price-chart > div,
-.volume-chart > div {
-  width: 100%;
-  height: 100%;
 }
 </style> 
