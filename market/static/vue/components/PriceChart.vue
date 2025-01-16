@@ -319,46 +319,23 @@ export default {
           fontSize: 11,
         },
         crosshair: {
-          // 配置十字虚线
-          mode: 1,  // 0 = 普通, 1 = 磁性吸附
+          // 修改十字线配置为默认样式
+          mode: 1,  // 保持磁性吸附
           vertLine: {
-            labelVisible: false,
-            labelBackgroundColor: '#45b97c',
-            style: 3,  // 0 = 实线, 1 = 点线, 2 = 短划线, 3 = 虚线
+            visible: true,
+            labelVisible: true,
+            style: 1,  // 改为点线样式
             width: 1,
-            color: '#999',
-            // 自定义时间格式
-            labelFormatter: (time) => {
-              const date = new Date(time * 1000);
-              // 根据不同的时间周期显示不同的格式
-              if (this.currentPeriod === '1h') {
-                // 1小时周期显示 HH:mm:ss
-                const hours = date.getHours().toString().padStart(2, '0');
-                const minutes = date.getMinutes().toString().padStart(2, '0');
-                const seconds = date.getSeconds().toString().padStart(2, '0');
-                return `${hours}:${minutes}:${seconds}`;
-              } else if (this.currentPeriod === '1d') {
-                // 1天周期显示 MM月DD日 HH:mm
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const day = date.getDate().toString().padStart(2, '0');
-                const hours = date.getHours().toString().padStart(2, '0');
-                const minutes = date.getMinutes().toString().padStart(2, '0');
-                return `${month}月${day}日 ${hours}:${minutes}`;
-              } else {
-                // 1月周期显示 YYYY年MM月DD日
-                const year = date.getFullYear();
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const day = date.getDate().toString().padStart(2, '0');
-                return `${year}年${month}月${day}日`;
-              }
-            }
+            color: '#758696',
+            labelBackgroundColor: '#758696'
           },
           horzLine: {
+            visible: true,
             labelVisible: true,
-            labelBackgroundColor: '#45b97c',
-            style: 3,
+            style: 1,  // 改为点线样式
             width: 1,
-            color: '#999'
+            color: '#758696',
+            labelBackgroundColor: '#758696'
           }
         },
         grid: {
@@ -623,21 +600,21 @@ export default {
   flex-direction: column;
   border: none;
   border-radius: 0;
-  height: calc(100vh - 300px);
-  min-height: 400px;
-  max-height: 600px;
+  height: calc(100vh - 200px);
+  min-height: 500px;
+  max-height: 800px;
   background-color: #fff;
 }
 
 .price-chart {
-  flex: 7;
-  height: 70%;
+  flex: 3;
+  height: 60%;
   border-bottom: 1px solid #f0f0f0;
 }
 
 .volume-chart {
-  flex: 3;
-  height: 30%;
+  flex: 2;
+  height: 40%;
 }
 
 .price-chart > div,
@@ -720,7 +697,8 @@ export default {
   }
   
   .charts-container {
-    height: calc(100vh - 400px);
+    height: calc(100vh - 300px);
+    min-height: 400px;
   }
 }
 
@@ -732,7 +710,7 @@ export default {
   }
   
   .charts-container {
-    height: calc(100vh - 450px);
+    height: calc(100vh - 350px);
   }
 }
 </style> 
