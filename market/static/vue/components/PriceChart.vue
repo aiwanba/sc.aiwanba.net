@@ -5,37 +5,41 @@
     <div class="section-content">
       <!-- 图表控制器 -->
       <div class="chart-controls">
-        <div class="quality-selector">
-          <button 
-            v-for="q in qualities" 
-            :key="q.value"
-            :class="[
-              'quality-btn', 
-              { 
-                'active': currentQuality === q.value,
-                'disabled': q.value > 0 && !q.isActivated
-              }
-            ]"
-            @click="handleQualityClick(q)"
-          >
-            {{ q.label }}
-          </button>
+        <div class="controls-left">
+          <div class="quality-selector">
+            <button 
+              v-for="q in qualities" 
+              :key="q.value"
+              :class="[
+                'quality-btn', 
+                { 
+                  'active': currentQuality === q.value,
+                  'disabled': q.value > 0 && !q.isActivated
+                }
+              ]"
+              @click="handleQualityClick(q)"
+            >
+              {{ q.label }}
+            </button>
+          </div>
         </div>
-        <div class="time-selector">
-          <button 
-            v-for="period in timePeriods" 
-            :key="period.value"
-            :class="[
-              'time-btn', 
-              { 
-                'active': currentPeriod === period.value,
-                'disabled': period.value !== '1h' && !period.isActivated
-              }
-            ]"
-            @click="handlePeriodClick(period)"
-          >
-            {{ period.label }}
-          </button>
+        <div class="controls-right">
+          <div class="time-selector">
+            <button 
+              v-for="period in timePeriods" 
+              :key="period.value"
+              :class="[
+                'time-btn', 
+                { 
+                  'active': currentPeriod === period.value,
+                  'disabled': period.value !== '1h' && !period.isActivated
+                }
+              ]"
+              @click="handlePeriodClick(period)"
+            >
+              {{ period.label }}
+            </button>
+          </div>
         </div>
       </div>
       <!-- 图表容器 -->
@@ -290,134 +294,109 @@ export default {
 
     // 抽取公共配置
     createChartOptions(type = 'price') {
-      return {
+      const baseOptions = {
         layout: {
           backgroundColor: '#ffffff',
-          textColor: '#333',
+          textColor: '#333333',
+          fontSize: 11,
         },
         grid: {
-          vertLines: { 
-            color: 'rgba(240, 240, 240, 0.3)',  // 降低透明度
-            style: 1
+          vertLines: {
+            color: '#f0f0f0',
+            style: 0,
+            visible: true
           },
-          horzLines: { 
-            color: 'rgba(240, 240, 240, 0.3)',
-            style: 1
+          horzLines: {
+            color: '#f0f0f0',
+            style: 0,
+            visible: true
           }
         },
-        crosshair: {
-          vertLine: {
-            visible: true,
-            labelVisible: true,
-            style: 2,
-            color: '#999999',
-            width: 1,
-            labelBackgroundColor: '#ffffff',
-            axisLabelFormatter: (param) => {
-              if (param.price) {
-                return {
-                  text: `${Number(param.price).toFixed(3)}`,
-                  fontSize: 12,
-                  color: '#333'
-                };
-              }
-              return '';
-            }
-          },
-          horzLine: {
-            visible: true,
-            labelVisible: true,
-            style: 2,
-            color: '#999999',
-            width: 1
-          }
+        // 移除右侧刻度
+        rightPriceScale: {
+          visible: false,
         },
+        // 配置左侧刻度
         leftPriceScale: {
           visible: true,
-          borderColor: '#ddd',
-          entireTextOnly: true,
+          borderVisible: false,
           scaleMargins: {
-            top: 0.1,    // 减小上边距，让价格线占用更多空间
-            bottom: 0.1  // 减小下边距
+            top: 0.1,
+            bottom: 0.1,
           },
-          formatter: (price) => price.toFixed(2),  // 只保留2位小数
-          borderVisible: false
-        },
-        rightPriceScale: {
-          visible: false
+          ticksVisible: true,
+          borderColor: '#f0f0f0',
+          entireTextOnly: false,
+          autoScale: true,
+          alignLabels: true,
         },
         timeScale: {
-          visible: true,
-          borderColor: '#ddd',
+          borderVisible: false,
           timeVisible: true,
           secondsVisible: false,
-          rightOffset: 12,
-          barSpacing: 15,  // 调整间距
-          fixLeftEdge: true,
-          fixRightEdge: true,
-          rightBarStaysOnScroll: true,
           tickMarkFormatter: (time) => {
             const date = new Date(time * 1000);
             const hours = date.getHours().toString().padStart(2, '0');
             const minutes = date.getMinutes().toString().padStart(2, '0');
-            // 每15分钟显示一次时间
-            if (time % 900 === 0) {
-              return `${hours}:${minutes}`;
+            return `${hours}:${minutes}`;
+          },
+          rightOffset: 5,
+          barSpacing: 3,
+          minBarSpacing: 2
+        }
+      };
+
+      // 价格图表配置
+      if (type === 'price') {
+        return {
+          ...baseOptions,
+          leftPriceScale: {
+            ...baseOptions.leftPriceScale,
+            formatter: (price) => price.toFixed(3)
+          }
+        };
+      }
+
+      // 成交量图表配置
+      return {
+        ...baseOptions,
+        leftPriceScale: {
+          ...baseOptions.leftPriceScale,
+          formatter: (volume) => {
+            if (volume >= 1000000) {
+              return (volume / 1000000).toFixed(1) + 'M';
+            } else if (volume >= 1000) {
+              return (volume / 1000).toFixed(1) + 'K';
             }
-            return '';
+            return volume.toString();
           }
         }
       };
     },
 
     // 抽取系列配置
-    createSeriesOptions(type = 'price', title = '') {
-      const baseOptions = {
-        lastValueVisible: false,
-        priceScaleId: 'left',
-      };
-
+    createSeriesOptions(type = 'price') {
       if (type === 'price') {
         return {
-          ...baseOptions,
           color: '#ff7f50',
-          lineWidth: 2,
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: true,
+          crosshairMarkerVisible: true,
+          // 确保使用左侧刻度
+          priceScaleId: 'left',
           priceFormat: {
             type: 'price',
-            precision: 2,
-            minMove: 0.01
-          },
-          crosshairMarkerVisible: true,
-          // 添加基准线配置
-          baseLineVisible: true,
-          baseLineColor: '#f0f0f0',
-          baseLineWidth: 1,
-          baseLineStyle: 1  // 虚线样式
-        };
-      }
-
-      if (type === 'volume') {
-        return {
-          ...baseOptions,
-          color: '#26a69a',  // 默认颜色改为绿色
-          priceFormat: {
-            type: 'volume',
-            precision: 0,
-            formatter: (volume) => {  // 添加成交量格式化
-              if (volume >= 1000000) {
-                return (volume / 1000000).toFixed(1) + 'M';
-              } else if (volume >= 1000) {
-                return (volume / 1000).toFixed(1) + 'K';
-              }
-              return volume.toString();
-            }
+            precision: 3,
+            minMove: 0.001
           }
         };
       }
 
       return {
-        ...baseOptions,
-        color: '#26a69a',
+        color: (data) => data.value >= 0 ? '#26a69a' : '#ef5350',
+        // 确保使用左侧刻度
+        priceScaleId: 'left',
         priceFormat: {
           type: 'volume',
           formatter: (volume) => {
@@ -439,13 +418,17 @@ export default {
           return;
         }
 
+        const containerWidth = this.$refs.priceChartContainer.clientWidth;
+        const priceHeight = this.$refs.priceChartContainer.clientHeight;
+        const volumeHeight = this.$refs.volumeChartContainer.clientHeight;
+
         // 创建价格图表
         this.priceChart = createChart(
           this.$refs.priceChartContainer, 
           {
             ...this.createChartOptions('price'),
-            width: this.$refs.priceChartContainer.clientWidth,
-            height: 400
+            width: containerWidth,
+            height: priceHeight
           }
         );
 
@@ -454,8 +437,8 @@ export default {
           this.$refs.volumeChartContainer, 
           {
             ...this.createChartOptions('volume'),
-            width: this.$refs.volumeChartContainer.clientWidth,
-            height: 200
+            width: containerWidth,
+            height: volumeHeight
           }
         );
 
@@ -496,14 +479,12 @@ export default {
 
     handleResize() {
       if (this.priceChart && this.volumeChart) {
-        this.priceChart.resize(
-          this.$refs.priceChartContainer.clientWidth,
-          this.$refs.priceChartContainer.clientHeight
-        );
-        this.volumeChart.resize(
-          this.$refs.volumeChartContainer.clientWidth,
-          this.$refs.volumeChartContainer.clientHeight
-        );
+        const containerWidth = this.$refs.priceChartContainer.clientWidth;
+        const priceHeight = this.$refs.priceChartContainer.clientHeight;
+        const volumeHeight = this.$refs.volumeChartContainer.clientHeight;
+
+        this.priceChart.resize(containerWidth, priceHeight);
+        this.volumeChart.resize(containerWidth, volumeHeight);
       }
     }
   },
@@ -529,78 +510,78 @@ export default {
 
 <style scoped>
 .detail-section {
-  padding: 12px;
+  padding: 0;
   background-color: #fff;
 }
 
 .section-header {
   font-size: 12px;
-  font-weight: bold;
+  padding: 8px 12px;
   color: #333;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #45b97c;
-}
-
-.section-content {
-  padding: 8px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .charts-container {
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  overflow: hidden;
-  height: 600px;  /* 增加总高度 */
+  border: none;
+  border-radius: 0;
+  height: 600px;
+  background-color: #fff;
 }
 
 .price-chart {
-  flex: 3;  /* 调整比例 */
-  height: 400px;  /* 增加高度 */
-  background-color: #fff;
-  position: relative;
-  overflow: hidden;
+  flex: 7;
+  height: 70%;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .volume-chart {
-  flex: 2;  /* 调整比例 */
-  height: 200px;  /* 增加高度 */
-  background-color: #fff;
-  position: relative;
-  overflow: hidden;
+  flex: 3;
+  height: 30%;
 }
 
 .price-chart > div,
 .volume-chart > div {
   width: 100%;
-  height: 100%;
+  height: 100% !important;
 }
 
-/* 图表控制器样式 */
+/* 按钮样式 */
 .chart-controls {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f0f0;
   display: flex;
-  gap: 20px;
-  margin-bottom: 12px;  /* 减小底部间距 */
+  justify-content: space-between;
+  align-items: center;
+}
+
+.controls-left,
+.controls-right {
+  display: flex;
+  gap: 8px;
 }
 
 .quality-selector,
 .time-selector {
   display: flex;
-  gap: 5px;
+  gap: 4px;
 }
 
 .quality-btn,
 .time-btn {
   padding: 4px 8px;
-  border: 1px solid #ddd;
+  border: 1px solid #f0f0f0;
   background: #fff;
-  border-radius: 4px;
-  cursor: pointer;
+  border-radius: 2px;
   font-size: 12px;
-  color: #333;
+  color: #666;
+  cursor: pointer;
+}
+
+.quality-btn:hover,
+.time-btn:hover {
+  background: #f8f8f8;
 }
 
 .quality-btn.active,
