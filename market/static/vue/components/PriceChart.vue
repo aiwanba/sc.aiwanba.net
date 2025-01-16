@@ -27,7 +27,7 @@
                   'time-btn', 
                   { 
                     'active': currentPeriod === period.value,
-                    'disabled': period.value !== '1h' && !period.isActivated
+                    'disabled': period.value !== '1d' && !period.isActivated
                   }
                 ]"
                 @click="handlePeriodClick(period)"
@@ -98,7 +98,7 @@ export default {
     },
     period: {
       type: String,
-      default: '1h'
+      default: '1d'
     }
   },
   data() {
@@ -108,7 +108,7 @@ export default {
       priceSeries: null,
       volumeSeries: null,
       currentQuality: 0,
-      currentPeriod: '1h',
+      currentPeriod: '1d',
       // 保留原有的数据结构
       qualities: Array.from({ length: 13 }, (_, i) => ({
         label: `Q${i}`,
@@ -116,8 +116,8 @@ export default {
         isActivated: i === 0
       })),
       timePeriods: [
-        { label: '1小时', value: '1h', isActivated: true },
-        { label: '1天', value: '1d', isActivated: false },
+        { label: '1小时', value: '1h', isActivated: false },
+        { label: '1天', value: '1d', isActivated: true },
         { label: '1月', value: '1m', isActivated: false }
       ],
       productName: '电力',
@@ -140,7 +140,7 @@ export default {
     },
     period: {
       handler(newVal) {
-        this.currentPeriod = newVal;
+        this.currentPeriod = newVal || '1d';
         if (this.priceSeries && this.volumeSeries) {
           this.updateCharts();
         }
@@ -167,7 +167,7 @@ export default {
       try {
         // 构建 API URL
         const url = `/market/api/v1/market/history/${this.serverType}/${this.productId}/${this.currentQuality}?period=${this.currentPeriod}`;
-        console.log('请求 API URL:', url);  // 添加日志
+        console.log('请求 API URL:', url);
 
         const response = await fetch(url, {
           method: 'GET',
@@ -182,7 +182,7 @@ export default {
         }
 
         const result = await response.json();
-        console.log('API 响应数据:', result);  // 添加日志
+        console.log('API 响应数据:', result);
         
         if (result.code === 0) {
           return result.data;
@@ -210,7 +210,7 @@ export default {
     },
 
     handlePeriodClick(period) {
-      if (period.value === '1h') {
+      if (period.value === '1d') {
         this.currentPeriod = period.value;
         this.updateCharts();
       } else if (period.isActivated) {
@@ -695,11 +695,13 @@ export default {
     }, 250), // 250ms 的防抖延迟
   },
   mounted() {
+    // 确保初始化时使用 1d
+    this.currentPeriod = '1d';
+    
     this.$nextTick(() => {
       this.initCharts().then(() => {
         this.updateCharts();
       });
-      // 添加 resize 事件监听
       window.addEventListener('resize', this.handleResize);
     });
   },
