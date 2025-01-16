@@ -46,51 +46,46 @@
     <div class="detail-content">
       <div class="detail-container">
         <div class="detail-layout">
-          <!-- 左侧内容 -->
-          <div class="detail-left">
-            <!-- 商品基本信息 -->
-            <div class="detail-section">
-              <div class="section-header">商品基本信息</div>
-              <div class="section-content">
-                <table class="info-table">
-                  <tr>
-                    <td class="info-label">服务器</td>
-                    <td class="info-value">{{ serverType === 0 ? '商业大亨' : '企业家' }}</td>
-                  </tr>
-                  <tr>
-                    <td class="info-label">所属分组</td>
-                    <td class="info-value">{{ getProductGroup() }}</td>
-                  </tr>
-                  <tr>
-                    <td class="info-label">商品名称</td>
-                    <td class="info-value">{{ PRODUCT_TYPES[productId] || '未知商品' }}</td>
-                  </tr>
-                  <tr>
-                    <td class="info-label">商品ID</td>
-                    <td class="info-value">{{ productId }}</td>
-                  </tr>
-                </table>
-              </div>
+          <!-- 商品基本信息 -->
+          <div class="detail-section">
+            <div class="section-header">商品基本信息</div>
+            <div class="section-content">
+              <table class="info-table">
+                <tr>
+                  <td class="info-label">服务器</td>
+                  <td class="info-value">{{ serverType === 0 ? '商业大亨' : '企业家' }}</td>
+                </tr>
+                <tr>
+                  <td class="info-label">所属分组</td>
+                  <td class="info-value">{{ getProductGroup() }}</td>
+                </tr>
+                <tr>
+                  <td class="info-label">商品名称</td>
+                  <td class="info-value">{{ PRODUCT_TYPES[productId] || '未知商品' }}</td>
+                </tr>
+                <tr>
+                  <td class="info-label">商品ID</td>
+                  <td class="info-value">{{ productId }}</td>
+                </tr>
+              </table>
             </div>
+          </div>
 
-            <!-- 商品品质信息-->
-            <quality-info 
-              v-if="isValidProduct"
-              :server-type="serverType"
-              :product-id="productId"
-            />
-          </div>
-          <!-- 右侧内容 -->
-          <div class="detail-right">
-            <!-- 商品价格信息 -->
-            <price-chart 
-              v-if="isValidProduct"
-              :server-type="serverType"
-              :product-id="productId"
-              :quality="currentQuality"
-              :period="currentPeriod"
-            />
-          </div>
+          <!-- 商品品质信息 -->
+          <quality-info 
+            v-if="isValidProduct"
+            :server-type="serverType"
+            :product-id="productId"
+          />
+
+          <!-- 商品价格信息 -->
+          <price-chart 
+            v-if="isValidProduct"
+            :server-type="serverType"
+            :product-id="productId"
+            :quality="currentQuality"
+            :period="currentPeriod"
+          />
         </div>
       </div>
     </div>
@@ -417,75 +412,44 @@ export default {
   color: #999;
 }
 
-/* 左侧内容布局 */
+/* 修改主内容区布局 */
 .detail-layout {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;  /* 改为纵向布局 */
   gap: 20px;
   padding: 20px;
   width: 100%;
   box-sizing: border-box;
 }
 
-.detail-left {
-  flex: 1;
-  min-width: 320px;
-  max-width: 100%;
+.detail-section {
+  width: 100%;  /* 占满宽度 */
   background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* 小屏幕适配 */
+/* 响应式布局调整 */
 @media screen and (max-width: 768px) {
   .detail-content {
     padding: 96px 10px 10px;
   }
   
   .detail-layout {
-    flex-direction: column;
     gap: 10px;
     padding: 10px;
   }
-  
-  .detail-left {
-    flex: none;
-    width: 100%;
-    min-width: 100%;
-  }
 }
 
-/* 中等屏幕适配 */
-@media screen and (min-width: 769px) and (max-width: 1200px) {
+@media screen and (min-width: 769px) {
   .detail-content {
-    padding: 106px 15px 15px;
-  }
-  
-  .detail-layout {
-    gap: 15px;
-    padding: 15px;
-  }
-  
-  .detail-left {
-    flex: 1;
-    min-width: 320px;
-    max-width: 400px;
-  }
-}
-
-/* 大屏幕优化 */
-@media screen and (min-width: 1201px) {
-  .detail-content {
-    padding: 116px 20px 20px;
+    max-width: 1200px;  /* 限制最大宽度 */
+    margin: 0 auto;
   }
   
   .detail-layout {
     gap: 20px;
     padding: 20px;
-  }
-  
-  .detail-left {
-    flex: 1;
-    min-width: 400px;
-    max-width: 500px;
   }
 }
 
