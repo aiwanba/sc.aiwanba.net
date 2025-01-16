@@ -5,45 +5,50 @@
     <div class="section-content">
       <!-- 图表控制器 -->
       <div class="chart-controls">
-        <div class="controls-left">
-          <div class="quality-selector">
-            <button 
-              v-for="q in qualities" 
-              :key="q.value"
-              :class="['quality-btn', { 'active': currentQuality === q.value, 'disabled': q.value > 0 && !q.isActivated }]"
-              @click="handleQualityClick(q)"
-            >
-              {{ q.label }}
-            </button>
+        <div class="controls-row">
+          <div class="controls-left">
+            <div class="quality-selector">
+              <button 
+                v-for="q in qualities" 
+                :key="q.value"
+                :class="['quality-btn', { 'active': currentQuality === q.value, 'disabled': q.value > 0 && !q.isActivated }]"
+                @click="handleQualityClick(q)"
+              >
+                {{ q.label }}
+              </button>
+            </div>
+          </div>
+          <div class="controls-right">
+            <div class="time-selector">
+              <button 
+                v-for="period in timePeriods" 
+                :key="period.value"
+                :class="[
+                  'time-btn', 
+                  { 
+                    'active': currentPeriod === period.value,
+                    'disabled': period.value !== '1h' && !period.isActivated
+                  }
+                ]"
+                @click="handlePeriodClick(period)"
+              >
+                {{ period.label }}
+              </button>
+            </div>
           </div>
         </div>
-        <div class="controls-center">
+        <!-- 将价格提示框移到新的行 -->
+        <div class="tooltip-row">
           <div class="tooltip-label">价格提示框:</div>
           <div v-if="hoveredData" class="price-tooltip">
-            <div>价格: {{ hoveredData.price }}</div>
-            <div>成交量: {{ hoveredData.volume }}</div>
-            <div>时间: {{ hoveredData.time }}</div>
+            <span>价格: {{ hoveredData.price }}</span>
+            <span class="separator">|</span>
+            <span>成交量: {{ hoveredData.volume }}</span>
+            <span class="separator">|</span>
+            <span>时间: {{ hoveredData.time }}</span>
           </div>
           <div v-else class="price-tooltip empty-tooltip">
-            --
-          </div>
-        </div>
-        <div class="controls-right">
-          <div class="time-selector">
-            <button 
-              v-for="period in timePeriods" 
-              :key="period.value"
-              :class="[
-                'time-btn', 
-                { 
-                  'active': currentPeriod === period.value,
-                  'disabled': period.value !== '1h' && !period.isActivated
-                }
-              ]"
-              @click="handlePeriodClick(period)"
-            >
-              {{ period.label }}
-            </button>
+            <span>--</span>
           </div>
         </div>
       </div>
@@ -778,6 +783,12 @@ export default {
   padding: 8px 12px;
   border-bottom: 1px solid #f0f0f0;
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.controls-row {
+  display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
@@ -786,19 +797,17 @@ export default {
 
 .controls-left,
 .controls-right {
-  flex: 1;
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.controls-center {
-  flex: 2;
+.tooltip-row {
   display: flex;
-  justify-content: center;
   align-items: center;
   gap: 8px;
-  min-width: 200px;
+  padding-top: 4px;
+  border-top: 1px solid #f0f0f0;
 }
 
 .quality-selector,
@@ -839,28 +848,19 @@ export default {
 
 /* 添加媒体查询以适应小屏幕 */
 @media screen and (max-width: 768px) {
-  .chart-controls {
+  .controls-row {
     flex-direction: column;
     align-items: stretch;
   }
 
   .controls-left,
-  .controls-center,
   .controls-right {
     justify-content: center;
     width: 100%;
   }
 
-  .quality-btn,
-  .time-btn {
-    flex: 1;
-    min-width: 40px;
-    text-align: center;
-  }
-  
-  .charts-container {
-    height: calc(100vh - 300px);
-    min-height: 400px;
+  .tooltip-row {
+    justify-content: center;
   }
 }
 
@@ -891,12 +891,20 @@ export default {
   color: #333;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   white-space: nowrap;
-  min-width: 150px;
+  min-width: 400px;  /* 增加最小宽度 */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.separator {
+  color: #ddd;
+  margin: 0 4px;
 }
 
 .empty-tooltip {
-  text-align: center;
-  color: #999;
+  justify-content: center;  /* 居中显示 -- */
+  min-width: 400px;  /* 与有数据时保持相同宽度 */
 }
 
 .price-tooltip > div {
