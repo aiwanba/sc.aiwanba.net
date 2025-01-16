@@ -296,8 +296,14 @@ export default {
           textColor: '#333',
         },
         grid: {
-          vertLines: { color: '#f0f0f0' },
-          horzLines: { color: '#f0f0f0' },
+          vertLines: { 
+            color: 'rgba(240, 240, 240, 0.3)',  // 降低透明度
+            style: 1
+          },
+          horzLines: { 
+            color: 'rgba(240, 240, 240, 0.3)',
+            style: 1
+          }
         },
         crosshair: {
           vertLine: {
@@ -331,10 +337,10 @@ export default {
           borderColor: '#ddd',
           entireTextOnly: true,
           scaleMargins: {
-            top: 0.1,
-            bottom: 0.1,
+            top: 0.1,    // 减小上边距，让价格线占用更多空间
+            bottom: 0.1  // 减小下边距
           },
-          formatter: (price) => price.toFixed(3),
+          formatter: (price) => price.toFixed(2),  // 只保留2位小数
           borderVisible: false
         },
         rightPriceScale: {
@@ -345,8 +351,8 @@ export default {
           borderColor: '#ddd',
           timeVisible: true,
           secondsVisible: false,
-          rightOffset: 0,
-          barSpacing: 6,
+          rightOffset: 12,
+          barSpacing: 15,  // 调整间距
           fixLeftEdge: true,
           fixRightEdge: true,
           rightBarStaysOnScroll: true,
@@ -354,7 +360,11 @@ export default {
             const date = new Date(time * 1000);
             const hours = date.getHours().toString().padStart(2, '0');
             const minutes = date.getMinutes().toString().padStart(2, '0');
-            return `${date.getDate()}日 ${hours}:${minutes}`;
+            // 每15分钟显示一次时间
+            if (time % 900 === 0) {
+              return `${hours}:${minutes}`;
+            }
+            return '';
           }
         }
       };
@@ -374,8 +384,8 @@ export default {
           lineWidth: 2,
           priceFormat: {
             type: 'price',
-            precision: 3,
-            minMove: 0.001
+            precision: 2,
+            minMove: 0.01
           },
           crosshairMarkerVisible: true,
           // 添加基准线配置
@@ -386,12 +396,38 @@ export default {
         };
       }
 
+      if (type === 'volume') {
+        return {
+          ...baseOptions,
+          color: '#26a69a',  // 默认颜色改为绿色
+          priceFormat: {
+            type: 'volume',
+            precision: 0,
+            formatter: (volume) => {  // 添加成交量格式化
+              if (volume >= 1000000) {
+                return (volume / 1000000).toFixed(1) + 'M';
+              } else if (volume >= 1000) {
+                return (volume / 1000).toFixed(1) + 'K';
+              }
+              return volume.toString();
+            }
+          }
+        };
+      }
+
       return {
         ...baseOptions,
-        color: '#808080',
+        color: '#26a69a',
         priceFormat: {
           type: 'volume',
-          precision: 0
+          formatter: (volume) => {
+            if (volume >= 1000000) {
+              return (volume / 1000000).toFixed(1) + 'M';
+            } else if (volume >= 1000) {
+              return (volume / 1000).toFixed(1) + 'K';
+            }
+            return volume.toString();
+          }
         }
       };
     },
@@ -409,7 +445,7 @@ export default {
           {
             ...this.createChartOptions('price'),
             width: this.$refs.priceChartContainer.clientWidth,
-            height: 300
+            height: 400
           }
         );
 
@@ -419,7 +455,7 @@ export default {
           {
             ...this.createChartOptions('volume'),
             width: this.$refs.volumeChartContainer.clientWidth,
-            height: 150
+            height: 200
           }
         );
 
@@ -518,23 +554,23 @@ export default {
   border: 1px solid #ddd;
   border-radius: 4px;
   overflow: hidden;
-  height: 450px;  /* 设置固定总高度 */
+  height: 600px;  /* 增加总高度 */
 }
 
 .price-chart {
-  flex: 2;
-  height: 300px;  /* 固定高度 */
+  flex: 3;  /* 调整比例 */
+  height: 400px;  /* 增加高度 */
   background-color: #fff;
   position: relative;
-  overflow: hidden;  /* 防止内容溢出 */
+  overflow: hidden;
 }
 
 .volume-chart {
-  flex: 1;
-  height: 150px;  /* 固定高度 */
+  flex: 2;  /* 调整比例 */
+  height: 200px;  /* 增加高度 */
   background-color: #fff;
   position: relative;
-  overflow: hidden;  /* 防止内容溢出 */
+  overflow: hidden;
 }
 
 .price-chart > div,
