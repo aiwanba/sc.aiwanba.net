@@ -19,10 +19,10 @@
           <template v-if="qualityData && qualityData.length > 0">
             <tr v-for="item in qualityData" :key="item.quality">
               <td class="info-label">Q{{ item.quality }}</td>
-              <td class="info-value price">{{ item.latestPrice || '-' }}</td>
-              <td class="info-value price">{{ item.lowestPrice || '-' }}</td>
-              <td class="info-value price">{{ item.highestPrice || '-' }}</td>
-              <td class="info-value price">{{ item.averagePrice || '-' }}</td>
+              <td class="info-value price">{{ formatPrice(item.latestPrice) }}</td>
+              <td class="info-value price">{{ formatPrice(item.lowestPrice) }}</td>
+              <td class="info-value price">{{ formatPrice(item.highestPrice) }}</td>
+              <td class="info-value price">{{ formatPrice(item.averagePrice) }}</td>
               <td class="info-value time">{{ item.updateTime || '-' }}</td>
             </tr>
           </template>
@@ -70,6 +70,10 @@ export default {
     }
   },
   methods: {
+    formatPrice(price) {
+      if (price === null || price === undefined) return '-';
+      return Number(price).toFixed(3);
+    },
     async fetchQualityData() {
       if (this.serverType === null || this.productId === null) {
         return;
@@ -81,7 +85,13 @@ export default {
         const response = await fetch(
           `/market/api/v1/market/quality/${this.serverType}/${this.productId}`
         );
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const result = await response.json();
+        console.log('API返回数据:', result);
         
         if (result.code === 0 && result.data) {
           this.qualityData = result.data;
@@ -89,14 +99,13 @@ export default {
           if (this.qualityData.length > 0) {
             const latestTime = Math.max(
               ...this.qualityData
-                .map(item => item.updateTime)
-                .filter(Boolean)
-                .map(time => new Date(time).getTime())
+                .map(item => new Date(item.updateTime).getTime())
+                .filter(time => !isNaN(time))
             );
-            this.lastUpdateTime = new Date(latestTime).toLocaleString();
+            this.lastUpdateTime = new Date(latestTime).toLocaleString('zh-CN');
           }
         } else {
-          this.error = result.msg || '获取数据失败';
+          throw new Error(result.msg || '获取数据失败');
         }
       } catch (e) {
         this.error = `获取数据失败: ${e.message}`;
@@ -121,6 +130,7 @@ export default {
     }
   },
   mounted() {
+    console.log('QualityInfo组件已挂载');
     this.fetchQualityData();
     this.startAutoRefresh();
   },
@@ -209,6 +219,8 @@ export default {
   font-family: Monaco, monospace;
   color: #45b97c;
   border: 1px solid #ebeef5;
+  text-align: right;
+  padding-right: 12px;
 }
 
 .info-table .info-value.time {
