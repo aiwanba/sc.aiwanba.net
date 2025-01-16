@@ -318,10 +318,12 @@ export default {
         this.volumeSeries.setData(volumeData);
 
         // 为价格图表添加标记
-        const priceMarkers = priceData.map(point => ({
+        const priceMarkers = priceData.map((point, index) => ({
           time: point.time,
           position: 'aboveBar',
-          color: '#45b97c',
+          color: index > 0 
+            ? (point.value >= priceData[index - 1].value ? '#ef5350' : '#26a69a') 
+            : '#ef5350',
           shape: 'circle',
           text: point.value.toFixed(3),
           size: 0.5
@@ -479,59 +481,51 @@ export default {
     createSeriesOptions(type = 'price') {
       if (type === 'price') {
         return {
-          color: '#ff7f50',
+          color: '#758696',  // 价格线改为默认灰色
           lineWidth: 1,
           priceLineVisible: true,
           lastValueVisible: true,
           crosshairMarkerVisible: true,
-          // 确保使用左侧刻度
           priceScaleId: 'left',
           priceFormat: {
             type: 'price',
             precision: 3,
             minMove: 0.001
           },
-          // 修改标记配置
           markers: [],
           // 数据点配置
-          pointsVisible: true,  // 显示所有数据点
-          pointSize: 2,  // 数据点大小
-          pointFillColor: '#ef5350',  // 修改数据点颜色为红色
-          pointBorderColor: '#fff',  // 数据点边框颜色
-          pointBorderWidth: 1,  // 数据点边框宽度
+          pointsVisible: true,
+          pointSize: 2,
+          pointFillColor: '#ef5350',  // 保持数据点为红色
+          pointBorderColor: '#fff',
+          pointBorderWidth: 1,
           // 价格线配置
           priceLineVisible: true,
           priceLineWidth: 1,
-          priceLineColor: '#ef5350',  // 修改价格线颜色为红色
+          priceLineColor: '#758696',  // 价格线改为默认灰色
           priceLineStyle: 2,
-          // 动画
           lastPriceAnimation: 1
         };
       }
 
+      // 成交量图表配置
       return {
-        color: (data) => data.value >= 0 ? '#ef5350' : '#26a69a',  // 修改成交量柱状图颜色
-        // 确保使用左侧刻度
+        color: (data, index, series) => {
+          if (index > 0) {
+            const prevData = series.dataByIndex(index - 1);
+            return data.value >= prevData.value ? '#ef5350' : '#26a69a';
+          }
+          return '#808080';
+        },
         priceScaleId: 'left',
         priceFormat: {
           type: 'volume',
-          formatter: (volume) => {
-            if (volume >= 1000000) {
-              return (volume / 1000000).toFixed(1) + 'M';
-            } else if (volume >= 1000) {
-              return (volume / 1000).toFixed(1) + 'K';
-            }
-            return volume.toString();
-          }
+          precision: 0
         },
-        // 添加成交量标签配置
-        lastValueVisible: true,
-        // 添加数据点配置
         markers: [],
-        // 显示数据点
         pointsVisible: true,
         pointSize: 2,
-        pointFillColor: '#ef5350',  // 修改数据点颜色为红色
+        pointFillColor: '#ef5350',  // 数据点颜色改为红色
         pointBorderColor: '#fff',
         pointBorderWidth: 1
       };
