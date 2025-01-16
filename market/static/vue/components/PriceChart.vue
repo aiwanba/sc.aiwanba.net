@@ -73,7 +73,7 @@ export default {
     },
     period: {
       type: String,
-      default: '1d'
+      default: '1h'
     }
   },
   data() {
@@ -83,7 +83,7 @@ export default {
       priceSeries: null,
       volumeSeries: null,
       currentQuality: 0,
-      currentPeriod: '1d',
+      currentPeriod: '1h',
       // 保留原有的数据结构
       qualities: Array.from({ length: 13 }, (_, i) => ({
         label: `Q${i}`,
@@ -91,8 +91,8 @@ export default {
         isActivated: i === 0
       })),
       timePeriods: [
-        { label: '1小时', value: '1h', isActivated: false },
-        { label: '1天', value: '1d', isActivated: true },
+        { label: '1小时', value: '1h', isActivated: true },
+        { label: '1天', value: '1d', isActivated: false },
         { label: '1月', value: '1m', isActivated: false }
       ],
       productName: '电力',
@@ -135,27 +135,25 @@ export default {
   methods: {
     async fetchHistoryData() {
       try {
-        if (!this.productId || isNaN(this.productId) || this.productId < 0) {
-          console.warn('无效的商品ID:', this.productId);
-          return [];
-        }
+        // 构建 API URL
+        const url = `/market/api/v1/market/history/${this.serverType}/${this.productId}/${this.currentQuality}?period=${this.currentPeriod}`;
+        console.log('请求 API URL:', url);  // 添加日志
 
-        const response = await fetch(
-          `/market/api/v1/market/history/${this.serverType}/${this.productId}/${this.currentQuality}?period=${this.currentPeriod}`,
-          {
-            method: 'GET',
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json'
-            }
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
           }
-        );
+        });
 
         if (!response.ok) {
           throw new Error(`获取数据失败: ${response.status}`);
         }
 
         const result = await response.json();
+        console.log('API 响应数据:', result);  // 添加日志
+        
         if (result.code === 0) {
           return result.data;
         } else {
@@ -179,12 +177,15 @@ export default {
     },
 
     handlePeriodClick(period) {
-      if (period.value === '1d' || period.isActivated) {
+      console.log('切换时间周期:', period);
+      if (period.value === '1h' || period.isActivated) {
         this.currentPeriod = period.value;
+        console.log('设置新的时间周期:', this.currentPeriod);
         this.updateCharts();
       } else {
         period.isActivated = true;
         this.currentPeriod = period.value;
+        console.log('激活并设置新的时间周期:', this.currentPeriod);
         this.updateCharts();
       }
     },
@@ -203,8 +204,10 @@ export default {
         }
 
         const data = await this.fetchHistoryData();
+        console.log('从API获取的原始数据:', data);
         
         if (!data || data.length === 0) {
+          console.warn('没有获取到数据');
           this.priceSeries.setData([]);
           this.volumeSeries.setData([]);
           return;
@@ -213,6 +216,12 @@ export default {
         const uniqueData = new Map();
         data.forEach(item => {
           const time = item.time;
+          console.log('处理数据项:', {
+            原始时间戳: item.time,
+            价格: item.price,
+            数量: item.volume
+          });
+
           if (!uniqueData.has(time) || item.time > uniqueData.get(time).time) {
             uniqueData.set(time, {
               time: time,
@@ -224,18 +233,39 @@ export default {
 
         const formattedData = Array.from(uniqueData.values())
           .sort((a, b) => a.time - b.time);
+        
+        console.log('格式化后的数据:', formattedData);
 
         // 更新价格图表数据
-        this.priceSeries.setData(formattedData.map(item => ({
-          time: new Date(item.time).getTime() / 1000,
-          value: item.value
-        })));
+        const priceData = formattedData.map(item => {
+          const timeInSeconds = Math.floor(item.time / 1000);
+          console.log('价格数据转换:', {
+            原始时间戳: item.time,
+            转换后时间戳: timeInSeconds,
+            对应时间: new Date(timeInSeconds * 1000).toLocaleString(),
+            价格: item.value
+          });
+          return {
+            time: timeInSeconds,
+            value: item.value
+          };
+        });
+
+        this.priceSeries.setData(priceData);
 
         // 更新成交量图表数据
         const volumeData = formattedData.map((item, index) => {
           const prevItem = index > 0 ? formattedData[index - 1] : null;
+          const timeInSeconds = Math.floor(item.time / 1000);
+          console.log('成交量数据转换:', {
+            原始时间戳: item.time,
+            转换后时间戳: timeInSeconds,
+            对应时间: new Date(timeInSeconds * 1000).toLocaleString(),
+            成交量: item.volume,
+            涨跌: prevItem ? (item.value >= prevItem.value ? '涨' : '跌') : '首条'
+          });
           return {
-            time: new Date(item.time).getTime() / 1000,
+            time: timeInSeconds,
             value: item.volume,
             color: prevItem ? (item.value >= prevItem.value ? '#26a69a' : '#ef5350') : '#808080'
           };
@@ -243,12 +273,15 @@ export default {
 
         this.volumeSeries.setData(volumeData);
 
+        console.log('图表数据更新完成');
+
         // 同步两个图表的时间轴
         this.priceChart.timeScale().fitContent();
         this.volumeChart.timeScale().fitContent();
 
       } catch (err) {
         console.error('图表数据更新错误:', err);
+        console.error('错误堆栈:', err.stack);
         if (this.priceSeries && this.volumeSeries) {
           this.priceSeries.setData([]);
           this.volumeSeries.setData([]);
