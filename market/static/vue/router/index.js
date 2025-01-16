@@ -2,6 +2,11 @@ import { createRouter, createWebHistory } from 'vue-router'
 import CategoryGrid from '../components/CategoryGrid.vue'
 import ProductDetail from '../components/ProductDetail.vue'
 
+// 根据当前环境设置基础路径
+const base = window.location.hostname === 'sc.aiwanba.net' 
+  ? 'https://sc.aiwanba.net/'
+  : '/'
+
 const routes = [
   {
     path: '/',
@@ -30,7 +35,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory('/'),
+  history: createWebHistory(base),
   routes
 })
 

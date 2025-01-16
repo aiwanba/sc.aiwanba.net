@@ -22,7 +22,7 @@
     <div class="sub-nav">
       <div class="nav-section">
         <div class="nav-item">
-          <a :href="'/market'" class="nav-link">市场</a>
+          <router-link to="/market" class="nav-link">市场</router-link>
         </div>
         <div class="nav-arrow"></div>
         <div v-if="serverType === 0" 
@@ -108,6 +108,11 @@ export default {
   computed: {
     isValidProduct() {
       return typeof this.productId === 'number' && !isNaN(this.productId);
+    },
+    baseUrl() {
+      return window.location.hostname === 'sc.aiwanba.net' 
+        ? 'https://sc.aiwanba.net'
+        : ''
     }
   },
   data() {
