@@ -9,9 +9,10 @@ market_bp = Blueprint('market', __name__, url_prefix='/market')
 # 启用CORS
 CORS(market_bp)  # 简化CORS配置，允许所有来源
 
-@market_bp.route('/')
-def index():
-    """市场首页"""
+@market_bp.route('/', defaults={'path': ''})
+@market_bp.route('/<path:path>')
+def catch_all(path):
+    """处理所有市场相关的路由，返回Vue应用的index.html"""
     return render_template('market/index.html')
 
 @market_bp.route('/<int:server_type>/<int:product_id>')
