@@ -1,7 +1,7 @@
 // @ts-nocheck
 <template>
   <div class="detail-section">
-    <div class="section-header">价格信息</div>
+    <div class="section-header">商品基本信息</div>
     <div class="section-content">
       <!-- 图表控制器 -->
       <div class="chart-controls">
@@ -510,11 +510,21 @@ export default {
 
 <style scoped>
 .detail-section {
-  padding: 0;
+  padding: 8px;
+  border-bottom: 1px solid #eee;
   background-color: #fff;
 }
 
 .section-header {
+  font-size: 12px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid #45b97c;
+}
+
+.sub-section-header {
   font-size: 12px;
   padding: 8px 12px;
   color: #333;
