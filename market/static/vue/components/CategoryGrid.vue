@@ -22,7 +22,7 @@
     <div class="sub-nav">
       <div class="nav-section">
         <div class="nav-item">
-          <router-link to="/market" class="nav-link">市场</router-link>
+          <a :href="'/market'" class="nav-link">市场</a>
         </div>
         <div class="nav-arrow"></div>
         <div v-if="serverType === 0" 
