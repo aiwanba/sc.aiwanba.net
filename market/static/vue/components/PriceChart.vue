@@ -590,15 +590,15 @@ export default {
       const handleCrosshairMove = (param) => {
         console.log('Crosshair Move Event:', param);
 
-        if (!param || !param.time) {
+        if (!param || !param.logical === undefined) {  // 修改检查条件
           this.hoveredData = null;
           return;
         }
 
         try {
-          // 获取当前时间点的数据
-          const priceData = this.priceSeries.dataByIndex(param.logical - 1);
-          const volumeData = this.volumeSeries.dataByIndex(param.logical - 1);
+          // 获取当前时间点的数据 - 修改索引计算
+          const priceData = this.priceSeries.dataByIndex(Math.floor(param.logical));  // 使用 Math.floor
+          const volumeData = this.volumeSeries.dataByIndex(Math.floor(param.logical)); // 使用 Math.floor
           console.log('Series Data:', { priceData, volumeData });
 
           if (priceData && volumeData) {
