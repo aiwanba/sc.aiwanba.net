@@ -102,7 +102,7 @@ export default {
     quality: {
       handler(newVal) {
         this.currentQuality = newVal;
-        if (newVal === 0 || this.qualities[newVal].isActivated) {
+        if (this.priceSeries && this.volumeSeries) {
           this.updateCharts();
         }
       },
@@ -111,7 +111,7 @@ export default {
     period: {
       handler(newVal) {
         this.currentPeriod = newVal;
-        if (newVal === '1h' || this.timePeriods.find(p => p.value === newVal).isActivated) {
+        if (this.priceSeries && this.volumeSeries) {
           this.updateCharts();
         }
       },
@@ -473,7 +473,9 @@ export default {
   },
   mounted() {
     this.$nextTick(() => {
-      this.initCharts();
+      this.initCharts().then(() => {
+        this.updateCharts();
+      });
       window.addEventListener('resize', this.handleResize);
     });
   },
