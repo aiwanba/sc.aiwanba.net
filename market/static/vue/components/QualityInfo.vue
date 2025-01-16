@@ -51,11 +51,13 @@ export default {
   props: {
     serverType: {
       type: Number,
-      required: true
+      required: true,
+      validator: value => !isNaN(value)
     },
     productId: {
       type: Number,
-      required: true
+      required: true,
+      validator: value => !isNaN(value)
     }
   },
   data() {

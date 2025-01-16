@@ -59,11 +59,13 @@ export default {
   props: {
     serverType: {
       type: Number,
-      required: true
+      required: true,
+      validator: value => !isNaN(value)
     },
     productId: {
       type: Number,
-      required: true
+      required: true,
+      validator: value => !isNaN(value)
     },
     quality: {
       type: Number,
@@ -116,14 +118,21 @@ export default {
       }
     },
     productId: {
-      handler() {
-        this.updateCharts();
+      handler(newVal) {
+        if (typeof newVal === 'number' && !isNaN(newVal)) {
+          this.updateCharts();
+        }
       }
     }
   },
   methods: {
     async fetchHistoryData() {
       try {
+        if (!this.productId || isNaN(this.productId) || this.productId < 0) {
+          console.warn('无效的商品ID:', this.productId);
+          return [];
+        }
+
         const response = await fetch(
           `/market/api/v1/market/history/${this.serverType}/${this.productId}/${this.currentQuality}?period=${this.currentPeriod}`,
           {
@@ -146,7 +155,7 @@ export default {
           throw new Error(result.message || '获取数据失败');
         }
       } catch (err) {
-        console.error('Error fetching history data:', err);
+        console.error('获取历史数据错误:', err);
         return [];
       }
     },
@@ -175,9 +184,20 @@ export default {
 
     async updateCharts() {
       try {
+        if (!this.productId || this.productId === 'null') {
+          this.priceSeries?.setData([]);
+          this.volumeSeries?.setData([]);
+          return;
+        }
+
         const data = await this.fetchHistoryData();
         
-        // 数据预处理：按时间排序并去重
+        if (!data || data.length === 0) {
+          this.priceSeries?.setData([]);
+          this.volumeSeries?.setData([]);
+          return;
+        }
+
         const uniqueData = new Map();
         data.forEach(item => {
           const time = Math.floor(item.time / 1000); // 转换为秒
@@ -212,6 +232,8 @@ export default {
 
       } catch (err) {
         console.error('图表数据更新错误:', err);
+        this.priceSeries?.setData([]);
+        this.volumeSeries?.setData([]);
       }
     },
 
@@ -224,6 +246,19 @@ export default {
         grid: {
           vertLines: { color: '#f0f0f0' },
           horzLines: { color: '#f0f0f0' },
+        },
+        crosshair: {
+          mode: 1,  // 十字准星模式
+          vertLine: {
+            width: 1,
+            color: '#999',
+            style: 1,  // 实线
+            labelVisible: true,  // 显示标签
+            labelBackgroundColor: '#fff',  // 标签背景色
+          },
+          horzLine: {
+            visible: false,  // 隐藏水平线
+          }
         },
         timeScale: {
           borderColor: '#ddd',
@@ -290,7 +325,11 @@ export default {
         },
         lastValueVisible: true,
         priceLineVisible: false,
-        priceScaleId: 'left'
+        priceScaleId: 'left',
+        // 添加tooltip配置
+        crosshairMarkerRadius: 4,
+        crosshairMarkerBorderColor: '#fff',
+        crosshairMarkerBackgroundColor: '#ff7f50',
       });
 
       // 添加成交量数据系列
@@ -305,15 +344,50 @@ export default {
         priceScaleId: 'left'
       });
 
-      // 同步时间轴
-      this.priceChart.timeScale().subscribeVisibleTimeRangeChange(() => {
-        const timeRange = this.priceChart.timeScale().getVisibleRange();
-        this.volumeChart.timeScale().setVisibleRange(timeRange);
+      // 添加十字准星移动事件监听
+      this.priceChart.subscribeCrosshairMove((param) => {
+        if (param.time) {
+          const price = param.seriesPrices.get(this.priceSeries);
+          if (price) {
+            // 更新价格标签
+            this.priceSeries.setMarkers([{
+              time: param.time,
+              position: 'aboveBar',
+              color: '#ff7f50',
+              shape: 'circle',
+              text: `价格: ${price.toFixed(3)}`
+            }]);
+          }
+        }
       });
 
-      this.volumeChart.timeScale().subscribeVisibleTimeRangeChange(() => {
-        const timeRange = this.volumeChart.timeScale().getVisibleRange();
-        this.priceChart.timeScale().setVisibleRange(timeRange);
+      this.volumeChart.subscribeCrosshairMove((param) => {
+        if (param.time) {
+          const volume = param.seriesPrices.get(this.volumeSeries);
+          if (volume) {
+            // 更新成交量标签
+            this.volumeSeries.setMarkers([{
+              time: param.time,
+              position: 'aboveBar',
+              color: '#808080',
+              shape: 'circle',
+              text: `成交量: ${Math.round(volume).toLocaleString()}`
+            }]);
+          }
+        }
+      });
+
+      // 同步两个图表的十字准星
+      this.priceChart.subscribeCrosshairMove((param) => {
+        if (param.point) {
+          this.volumeChart.setCrosshairPosition(param.point, param.time);
+        }
+      });
+
+      this.volumeChart.subscribeCrosshairMove((param) => {
+        if (param.point) {
+          this.priceChart.setCrosshairPosition(param.point, param.time);
+        }
       });
 
       this.updateCharts();

@@ -75,6 +75,7 @@
 
             <!-- 商品品质信息-->
             <quality-info 
+              v-if="isValidProduct"
               :server-type="serverType"
               :product-id="productId"
             />
@@ -83,6 +84,7 @@
           <div class="detail-right">
             <!-- 商品价格信息 -->
             <price-chart 
+              v-if="isValidProduct"
               :server-type="serverType"
               :product-id="productId"
               :quality="currentQuality"
@@ -105,6 +107,11 @@ export default {
   components: {
     PriceChart,
     QualityInfo
+  },
+  computed: {
+    isValidProduct() {
+      return typeof this.productId === 'number' && !isNaN(this.productId);
+    }
   },
   data() {
     return {
@@ -133,8 +140,20 @@ export default {
   mounted() {
     const pathParts = window.location.pathname.split('/');
     if (pathParts.length >= 4) {
-      this.serverType = parseInt(pathParts[2]);
-      this.productId = parseInt(pathParts[3]);
+      const serverType = parseInt(pathParts[2]);
+      const productId = parseInt(pathParts[3]);
+      
+      if (!isNaN(serverType) && !isNaN(productId)) {
+        this.serverType = serverType;
+        this.productId = productId;
+      } else {
+        console.warn('无效的服务器类型或商品ID');
+        // 重定向到首页
+        window.location.href = '/market';
+      }
+    } else {
+      // 路径不完整时重定向到首页
+      window.location.href = '/market';
     }
   }
 }
