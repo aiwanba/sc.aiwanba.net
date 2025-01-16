@@ -85,6 +85,8 @@
             <price-chart 
               :server-type="serverType"
               :product-id="productId"
+              :quality="currentQuality"
+              :period="currentPeriod"
             />
           </div>
         </div>
@@ -108,6 +110,8 @@ export default {
     return {
       serverType: parseInt(localStorage.getItem('serverType') || '0'),
       productId: null,
+      currentQuality: 0,
+      currentPeriod: '1d',
       PRODUCT_TYPES
     }
   },
