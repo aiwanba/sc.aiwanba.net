@@ -21,7 +21,9 @@
     
     <div class="sub-nav">
       <div class="nav-section">
-        <div class="nav-item active">市场</div>
+        <div class="nav-item">
+          <a :href="'/market'" class="nav-link">市场</a>
+        </div>
         <div class="nav-arrow"></div>
         <div v-if="serverType === 0" 
              class="nav-item"
