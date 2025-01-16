@@ -128,36 +128,25 @@ export default {
                 backgroundColor: '#505765',
                 color: '#fff',
                 formatter: function (params) {
-                  if (params.axisDimension === 'y') {
-                    return '';
-                  }
                   if (params.axisDimension === 'x') {
+                    const date = new Date(params.value);
+                    return date.toLocaleString('zh-CN', { 
+                      hour: '2-digit', 
+                      minute: '2-digit',
+                      second: '2-digit'
+                    });
+                  }
+                  if (params.axisDimension === 'y') {
                     if (params.axisIndex === 0) {
-                      return `价格: ${Number(params.value).toFixed(3)}`;
+                      return params.value.toFixed(3);
                     }
                     if (params.axisIndex === 1) {
-                      return `成交量: ${Math.round(params.value).toLocaleString()}`;
+                      return Math.round(params.value).toLocaleString();
                     }
                   }
                   return '';
                 }
               }
-            },
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            borderWidth: 1,
-            borderColor: '#ccc',
-            padding: [10, 10],
-            textStyle: {
-              color: '#000',
-              fontSize: 12
-            }
-          },
-          axisPointer: {
-            link: [{
-              xAxisIndex: 'all'
-            }],
-            label: {
-              backgroundColor: '#505765'
             }
           },
           grid: [{
@@ -206,7 +195,8 @@ export default {
                 }
               },
               axisPointer: {
-                show: true
+                show: true,
+                type: 'line'
               }
             },
             {
@@ -225,9 +215,7 @@ export default {
               splitLine: { show: false },
               axisPointer: {
                 show: true,
-                label: {
-                  show: false
-                }
+                type: 'line'
               }
             }
           ],
@@ -246,6 +234,10 @@ export default {
                 color: '#999',
                 fontSize: 11,
                 formatter: (value) => this.formatPrice(value)
+              },
+              axisPointer: {
+                show: true,
+                type: 'line'
               }
             },
             {
@@ -257,6 +249,10 @@ export default {
                 color: '#999',
                 fontSize: 11,
                 formatter: (value) => Math.round(value).toLocaleString()
+              },
+              axisPointer: {
+                show: true,
+                type: 'line'
               }
             }
           ],
