@@ -1,7 +1,7 @@
 // @ts-nocheck
 <template>
   <div class="detail-section">
-    <div class="section-header">商品基本信息</div>
+    <div class="section-header">商品价格信息</div>
     <div class="section-content">
       <!-- 图表控制器 -->
       <div class="chart-controls">
