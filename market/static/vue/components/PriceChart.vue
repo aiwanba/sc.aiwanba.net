@@ -231,11 +231,17 @@ export default {
           value: item.value
         })));
 
-        // 更新成交量图表数据
-        this.volumeSeries.setData(formattedData.map(item => ({
-          time: item.time,
-          value: item.volume
-        })));
+        // 更新成交量图表数据，添加颜色区分
+        const volumeData = formattedData.map((item, index) => {
+          const prevItem = index > 0 ? formattedData[index - 1] : null;
+          return {
+            time: item.time,
+            value: item.volume,
+            color: prevItem ? (item.value >= prevItem.value ? '#26a69a' : '#ef5350') : '#808080'
+          };
+        });
+
+        this.volumeSeries.setData(volumeData);
 
         // 同步两个图表的时间轴
         this.priceChart.timeScale().fitContent();
@@ -282,7 +288,7 @@ export default {
           },
           horzLine: {
             visible: true,
-            labelVisible: false,
+            labelVisible: true,
             style: 2,
             color: '#999999',
             width: 1
@@ -305,13 +311,19 @@ export default {
         timeScale: {
           visible: true,
           borderColor: '#ddd',
-          timeVisible: false,
+          timeVisible: true,
           secondsVisible: false,
           rightOffset: 0,
           barSpacing: 6,
           fixLeftEdge: true,
           fixRightEdge: true,
-          rightBarStaysOnScroll: true
+          rightBarStaysOnScroll: true,
+          tickMarkFormatter: (time) => {
+            const date = new Date(time * 1000);
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `${date.getDate()}日 ${hours}:${minutes}`;
+          }
         }
       };
     },
@@ -333,7 +345,12 @@ export default {
             precision: 3,
             minMove: 0.001
           },
-          crosshairMarkerVisible: true
+          crosshairMarkerVisible: true,
+          // 添加基准线配置
+          baseLineVisible: true,
+          baseLineColor: '#f0f0f0',
+          baseLineWidth: 1,
+          baseLineStyle: 1  // 虚线样式
         };
       }
 
