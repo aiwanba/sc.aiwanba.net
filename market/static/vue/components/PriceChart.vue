@@ -94,7 +94,8 @@ export default {
         { label: '1小时', value: '1h', isActivated: false },
         { label: '1天', value: '1d', isActivated: true },
         { label: '1月', value: '1m', isActivated: false }
-      ]
+      ],
+      productName: '电力',
     }
   },
   watch: {
@@ -190,7 +191,6 @@ export default {
 
     async updateCharts() {
       try {
-        // 检查图表是否已初始化
         if (!this.priceSeries || !this.volumeSeries) {
           console.warn('图表尚未初始化');
           return;
@@ -212,7 +212,7 @@ export default {
 
         const uniqueData = new Map();
         data.forEach(item => {
-          const time = Math.floor(item.time / 1000); // 转换为秒
+          const time = Math.floor(item.time / 1000);
           if (!uniqueData.has(time) || item.time > uniqueData.get(time).time) {
             uniqueData.set(time, {
               time: time,
@@ -222,17 +222,16 @@ export default {
           }
         });
 
-        // 转换为数组并排序
         const formattedData = Array.from(uniqueData.values())
           .sort((a, b) => a.time - b.time);
 
-        // 更新价格图表
+        // 更新价格图表数据
         this.priceSeries.setData(formattedData.map(item => ({
           time: item.time,
           value: item.value
         })));
 
-        // 更新成交量图表
+        // 更新成交量图表数据
         this.volumeSeries.setData(formattedData.map(item => ({
           time: item.time,
           value: item.volume
@@ -251,139 +250,163 @@ export default {
       }
     },
 
-    initCharts() {
+    // 抽取公共配置
+    createChartOptions(type = 'price') {
+      return {
+        layout: {
+          backgroundColor: '#ffffff',
+          textColor: '#333',
+        },
+        grid: {
+          vertLines: { color: '#f0f0f0' },
+          horzLines: { color: '#f0f0f0' },
+        },
+        crosshair: {
+          vertLine: {
+            visible: true,
+            labelVisible: true,
+            style: 2,
+            color: '#999999',
+            width: 1,
+            labelBackgroundColor: '#ffffff',
+            axisLabelFormatter: (param) => {
+              if (param.price) {
+                return {
+                  text: `${Number(param.price).toFixed(3)}`,
+                  fontSize: 12,
+                  color: '#333'
+                };
+              }
+              return '';
+            }
+          },
+          horzLine: {
+            visible: true,
+            labelVisible: false,
+            style: 2,
+            color: '#999999',
+            width: 1
+          }
+        },
+        leftPriceScale: {
+          visible: true,
+          borderColor: '#ddd',
+          entireTextOnly: true,
+          scaleMargins: {
+            top: 0.1,
+            bottom: 0.1,
+          },
+          formatter: (price) => price.toFixed(3),
+          borderVisible: false
+        },
+        rightPriceScale: {
+          visible: false
+        },
+        timeScale: {
+          visible: true,
+          borderColor: '#ddd',
+          timeVisible: false,
+          secondsVisible: false,
+          rightOffset: 0,
+          barSpacing: 6,
+          fixLeftEdge: true,
+          fixRightEdge: true,
+          rightBarStaysOnScroll: true
+        }
+      };
+    },
+
+    // 抽取系列配置
+    createSeriesOptions(type = 'price', title = '') {
+      const baseOptions = {
+        lastValueVisible: false,
+        priceScaleId: 'left',
+      };
+
+      if (type === 'price') {
+        return {
+          ...baseOptions,
+          color: '#ff7f50',
+          lineWidth: 2,
+          priceFormat: {
+            type: 'price',
+            precision: 3,
+            minMove: 0.001
+          },
+          crosshairMarkerVisible: true
+        };
+      }
+
+      return {
+        ...baseOptions,
+        color: '#808080',
+        priceFormat: {
+          type: 'volume',
+          precision: 0
+        }
+      };
+    },
+
+    async initCharts() {
       try {
-        // 检查DOM元素是否存在
         if (!this.$refs.priceChartContainer || !this.$refs.volumeChartContainer) {
           console.warn('图表容器未找到');
           return;
         }
 
-        const commonOptions = {
-          layout: {
-            backgroundColor: '#ffffff',
-            textColor: '#333',
-          },
-          grid: {
-            vertLines: { color: '#f0f0f0' },
-            horzLines: { color: '#f0f0f0' },
-          },
-          crosshair: {
-            mode: 1,  // 十字准星模式
-            vertLine: {
-              width: 1,
-              color: '#999',
-              style: 1,  // 实线
-              labelVisible: true,  // 显示标签
-              labelBackgroundColor: '#fff',  // 标签背景色
-            },
-            horzLine: {
-              visible: false,  // 隐藏水平线
-            }
-          },
-          timeScale: {
-            borderColor: '#ddd',
-            timeVisible: true,
-            secondsVisible: false,
-            rightOffset: 0,
-            barSpacing: 6,
-            fixLeftEdge: true,
-            fixRightEdge: true,
-            rightBarStaysOnScroll: true,
-            tickMarkFormatter: (time) => {
-              const date = new Date(time * 1000);
-              return date.getHours().toString().padStart(2, '0') + ':' + 
-                     date.getMinutes().toString().padStart(2, '0');
-            }
+        // 创建价格图表
+        this.priceChart = createChart(
+          this.$refs.priceChartContainer, 
+          {
+            ...this.createChartOptions('price'),
+            width: this.$refs.priceChartContainer.clientWidth,
+            height: 400
           }
-        };
+        );
 
-        // 初始化价格图表
-        this.priceChart = createChart(this.$refs.priceChartContainer, {
-          ...commonOptions,
-          width: this.$refs.priceChartContainer.clientWidth,
-          height: 400,
-          leftPriceScale: {
-            visible: true,
-            borderColor: '#ddd',
-            scaleMargins: {
-              top: 0.1,
-              bottom: 0.1,
-            }
-          },
-          rightPriceScale: {
-            visible: false
+        // 创建成交量图表
+        this.volumeChart = createChart(
+          this.$refs.volumeChartContainer, 
+          {
+            ...this.createChartOptions('volume'),
+            width: this.$refs.volumeChartContainer.clientWidth,
+            height: 200
           }
-        });
+        );
 
-        // 初始化成交量图表
-        this.volumeChart = createChart(this.$refs.volumeChartContainer, {
-          ...commonOptions,
-          width: this.$refs.volumeChartContainer.clientWidth,
-          height: 200,
-          leftPriceScale: {
-            visible: true,
-            borderColor: '#ddd',
-            scaleMargins: {
-              top: 0.1,
-              bottom: 0.1,
-            }
-          },
-          rightPriceScale: {
-            visible: false
-          }
-        });
+        // 添加价格系列
+        this.priceSeries = this.priceChart.addLineSeries(
+          this.createSeriesOptions('price', `${this.productName} Q${this.currentQuality}`)
+        );
 
-        // 添加价格数据系列
-        this.priceSeries = this.priceChart.addLineSeries({
-          color: '#ff7f50',
-          lineWidth: 2,
-          crosshairMarkerVisible: true,
-          priceFormat: {
-            type: 'price',
-            precision: 3,
-            minMove: 0.001,
-          },
-          lastValueVisible: true,
-          priceLineVisible: false,
-          priceScaleId: 'left',
-        });
+        // 添加成交量系列
+        this.volumeSeries = this.volumeChart.addHistogramSeries(
+          this.createSeriesOptions('volume', '成交量')
+        );
 
-        // 添加成交量数据系列
-        this.volumeSeries = this.volumeChart.addHistogramSeries({
-          color: '#808080',
-          priceFormat: {
-            type: 'volume',
-            precision: 0,
-          },
-          lastValueVisible: true,
-          priceLineVisible: false,
-          priceScaleId: 'left'
-        });
+        // 设置十字准星同步
+        this.setupCrosshairSync();
 
-        // 同步两个图表的十字准星
-        this.priceChart.subscribeCrosshairMove((param) => {
-          if (param.point && this.volumeChart) {
-            this.volumeChart.setCrosshairPosition(param.point, param.time);
-          }
-        });
-
-        this.volumeChart.subscribeCrosshairMove((param) => {
-          if (param.point && this.priceChart) {
-            this.priceChart.setCrosshairPosition(param.point, param.time);
-          }
-        });
-
-        // 初始化完成后更新数据
-        this.$nextTick(() => {
-          if (this.productId && !isNaN(this.productId)) {
-            this.updateCharts();
-          }
-        });
-
+        // 更新数据
+        await this.updateCharts();
       } catch (err) {
         console.error('图表初始化错误:', err);
       }
+    },
+
+    // 抽取十字准星同步逻辑
+    setupCrosshairSync() {
+      this.priceChart.subscribeCrosshairMove((param) => {
+        if (this.volumeChart && param && param.point) {
+          this.volumeChart.setCrosshairPosition(param.point, param.time || undefined);
+        }
+      });
+
+      this.volumeChart.subscribeCrosshairMove((param) => {
+        if (this.priceChart && param && param.point) {
+          this.priceChart.setCrosshairPosition(param.point, param.time || undefined);
+        }
+      });
     },
 
     handleResize() {
@@ -498,12 +521,14 @@ export default {
   flex: 2;
   min-height: 400px;
   background-color: #fff;
+  position: relative;
 }
 
 .volume-chart {
   flex: 1;
   min-height: 200px;
   background-color: #fff;
+  position: relative;
 }
 
 .price-chart > div,
