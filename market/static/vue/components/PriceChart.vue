@@ -318,6 +318,49 @@ export default {
           textColor: '#333333',
           fontSize: 11,
         },
+        crosshair: {
+          // 配置十字虚线
+          mode: 1,  // 0 = 普通, 1 = 磁性吸附
+          vertLine: {
+            labelVisible: true,
+            labelBackgroundColor: '#45b97c',
+            style: 3,  // 0 = 实线, 1 = 点线, 2 = 短划线, 3 = 虚线
+            width: 1,
+            color: '#999',
+            // 自定义时间格式
+            labelFormatter: (time) => {
+              const date = new Date(time * 1000);
+              // 根据不同的时间周期显示不同的格式
+              if (this.currentPeriod === '1h') {
+                // 1小时周期显示 HH:mm:ss
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                const seconds = date.getSeconds().toString().padStart(2, '0');
+                return `${hours}:${minutes}:${seconds}`;
+              } else if (this.currentPeriod === '1d') {
+                // 1天周期显示 MM月DD日 HH:mm
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                return `${month}月${day}日 ${hours}:${minutes}`;
+              } else {
+                // 1月周期显示 YYYY年MM月DD日
+                const year = date.getFullYear();
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+                return `${year}年${month}月${day}日`;
+              }
+            }
+          },
+          horzLine: {
+            labelVisible: true,
+            labelBackgroundColor: '#45b97c',
+            style: 3,
+            width: 1,
+            color: '#999'
+          }
+        },
         grid: {
           vertLines: {
             color: '#f0f0f0',
@@ -356,21 +399,23 @@ export default {
             const date = new Date(time * 1000);
             // 根据不同的时间周期显示不同的格式
             if (this.currentPeriod === '1h') {
-              // 1小时周期显示 HH:mm
+              // 1小时周期显示 HH:mm (24小时制)
               const hours = date.getHours().toString().padStart(2, '0');
               const minutes = date.getMinutes().toString().padStart(2, '0');
               return `${hours}:${minutes}`;
             } else if (this.currentPeriod === '1d') {
-              // 1天周期显示 MM-DD HH:00
+              // 1天周期显示 MM月DD日 HH:mm
               const month = (date.getMonth() + 1).toString().padStart(2, '0');
               const day = date.getDate().toString().padStart(2, '0');
               const hours = date.getHours().toString().padStart(2, '0');
-              return `${month}-${day} ${hours}:00`;
+              const minutes = date.getMinutes().toString().padStart(2, '0');
+              return `${month}月${day}日 ${hours}:${minutes}`;
             } else {
-              // 1月周期显示 MM-DD
+              // 1月周期显示 YYYY年MM月DD日
+              const year = date.getFullYear();
               const month = (date.getMonth() + 1).toString().padStart(2, '0');
               const day = date.getDate().toString().padStart(2, '0');
-              return `${month}-${day}`;
+              return `${year}年${month}月${day}日`;
             }
           },
           rightOffset: 5,
