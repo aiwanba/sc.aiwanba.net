@@ -58,6 +58,17 @@
 <script>
 import { createChart } from 'lightweight-charts';
 
+// 添加防抖函数
+function debounce(fn, delay) {
+  let timer = null;
+  return function (...args) {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn.apply(this, args);
+    }, delay);
+  };
+}
+
 export default {
   name: 'PriceChart',
   props: {
@@ -477,7 +488,7 @@ export default {
       });
     },
 
-    handleResize() {
+    handleResize: debounce(function() {
       if (this.priceChart && this.volumeChart) {
         const containerWidth = this.$refs.priceChartContainer.clientWidth;
         const priceHeight = this.$refs.priceChartContainer.clientHeight;
@@ -485,18 +496,24 @@ export default {
 
         this.priceChart.resize(containerWidth, priceHeight);
         this.volumeChart.resize(containerWidth, volumeHeight);
+        
+        // 重新适应内容
+        this.priceChart.timeScale().fitContent();
+        this.volumeChart.timeScale().fitContent();
       }
-    }
+    }, 250), // 250ms 的防抖延迟
   },
   mounted() {
     this.$nextTick(() => {
       this.initCharts().then(() => {
         this.updateCharts();
       });
+      // 添加 resize 事件监听
       window.addEventListener('resize', this.handleResize);
     });
   },
   beforeUnmount() {
+    // 移除事件监听
     window.removeEventListener('resize', this.handleResize);
     if (this.priceChart) {
       this.priceChart.remove();
@@ -513,6 +530,9 @@ export default {
   padding: 8px;
   border-bottom: 1px solid #eee;
   background-color: #fff;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .section-header {
@@ -536,7 +556,9 @@ export default {
   flex-direction: column;
   border: none;
   border-radius: 0;
-  height: 600px;
+  height: calc(100vh - 300px);
+  min-height: 400px;
+  max-height: 600px;
   background-color: #fff;
 }
 
@@ -564,18 +586,22 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .controls-left,
 .controls-right {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .quality-selector,
 .time-selector {
   display: flex;
   gap: 4px;
+  flex-wrap: wrap;
 }
 
 .quality-btn,
@@ -605,5 +631,41 @@ export default {
 .time-btn.disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* 添加媒体查询以适应小屏幕 */
+@media screen and (max-width: 768px) {
+  .chart-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .controls-left,
+  .controls-right {
+    justify-content: center;
+  }
+
+  .quality-btn,
+  .time-btn {
+    flex: 1;
+    min-width: 40px;
+    text-align: center;
+  }
+  
+  .charts-container {
+    height: calc(100vh - 400px);
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .quality-selector,
+  .time-selector {
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .charts-container {
+    height: calc(100vh - 450px);
+  }
 }
 </style> 
