@@ -41,9 +41,13 @@
         <div class="tooltip-row">
           <div class="tooltip-label">价格提示框:</div>
           <div v-if="hoveredData" class="price-tooltip">
-            <span>价格: {{ hoveredData.price }}</span>
+            <span :class="['price', hoveredData.priceChange ? 'up' : 'down']">
+              价格: {{ hoveredData.price }}
+            </span>
             <span class="separator">|</span>
-            <span>成交量: {{ hoveredData.volume }}</span>
+            <span :class="['volume', hoveredData.priceChange ? 'up' : 'down']">
+              成交量: {{ hoveredData.volume }}
+            </span>
             <span class="separator">|</span>
             <span>时间: {{ hoveredData.time }}</span>
           </div>
@@ -294,7 +298,7 @@ export default {
           return {
             time: item.time,
             value: item.volume,
-            color: prevItem ? (item.value >= prevItem.value ? '#26a69a' : '#ef5350') : '#808080'
+            color: prevItem ? (item.value >= prevItem.value ? '#ef5350' : '#26a69a') : '#808080'
           };
         });
 
@@ -492,13 +496,13 @@ export default {
           // 数据点配置
           pointsVisible: true,  // 显示所有数据点
           pointSize: 2,  // 数据点大小
-          pointFillColor: '#45b97c',  // 数据点填充颜色
+          pointFillColor: '#ef5350',  // 修改数据点颜色为红色
           pointBorderColor: '#fff',  // 数据点边框颜色
           pointBorderWidth: 1,  // 数据点边框宽度
           // 价格线配置
           priceLineVisible: true,
           priceLineWidth: 1,
-          priceLineColor: '#45b97c',
+          priceLineColor: '#ef5350',  // 修改价格线颜色为红色
           priceLineStyle: 2,
           // 动画
           lastPriceAnimation: 1
@@ -506,7 +510,7 @@ export default {
       }
 
       return {
-        color: (data) => data.value >= 0 ? '#26a69a' : '#ef5350',
+        color: (data) => data.value >= 0 ? '#ef5350' : '#26a69a',  // 修改成交量柱状图颜色
         // 确保使用左侧刻度
         priceScaleId: 'left',
         priceFormat: {
@@ -527,7 +531,7 @@ export default {
         // 显示数据点
         pointsVisible: true,
         pointSize: 2,
-        pointFillColor: '#26a69a',
+        pointFillColor: '#ef5350',  // 修改数据点颜色为红色
         pointBorderColor: '#fff',
         pointBorderWidth: 1
       };
@@ -599,6 +603,7 @@ export default {
           // 获取当前时间点的数据 - 修改索引计算
           const priceData = this.priceSeries.dataByIndex(Math.floor(param.logical));  // 使用 Math.floor
           const volumeData = this.volumeSeries.dataByIndex(Math.floor(param.logical)); // 使用 Math.floor
+          const prevPriceData = this.priceSeries.dataByIndex(Math.floor(param.logical) - 1);
           console.log('Series Data:', { priceData, volumeData });
 
           if (priceData && volumeData) {
@@ -614,6 +619,11 @@ export default {
               timeStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
             }
 
+            // 判断价格变化方向
+            const priceChange = prevPriceData 
+              ? priceData.value >= prevPriceData.value 
+              : true;
+
             // 格式化成交量显示
             const formattedVolume = volumeData.value >= 1000000 
               ? (volumeData.value / 1000000).toFixed(1) + 'M'
@@ -624,7 +634,8 @@ export default {
             this.hoveredData = {
               price: priceData.value.toFixed(3),
               volume: formattedVolume,
-              time: timeStr
+              time: timeStr,
+              priceChange: priceChange  // 添加价格变化方向
             };
 
             console.log('Updated hoveredData:', this.hoveredData);
@@ -927,5 +938,20 @@ export default {
     align-items: center;
     width: 100%;
   }
+}
+
+.price,
+.volume {
+  color: #333;
+}
+
+.price.up,
+.volume.up {
+  color: #ef5350;  /* 上涨时的红色 */
+}
+
+.price.down,
+.volume.down {
+  color: #26a69a;  /* 下跌时的绿色 */
 }
 </style> 
