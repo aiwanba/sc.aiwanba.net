@@ -101,25 +101,31 @@ export default {
     quality: {
       handler(newVal) {
         this.currentQuality = newVal;
-        this.updateCharts();
+        if (this.priceSeries && this.volumeSeries) {
+          this.updateCharts();
+        }
       },
       immediate: true
     },
     period: {
       handler(newVal) {
         this.currentPeriod = newVal;
-        this.updateCharts();
+        if (this.priceSeries && this.volumeSeries) {
+          this.updateCharts();
+        }
       },
       immediate: true
     },
     serverType: {
       handler() {
-        this.updateCharts();
+        if (this.priceSeries && this.volumeSeries) {
+          this.updateCharts();
+        }
       }
     },
     productId: {
       handler(newVal) {
-        if (typeof newVal === 'number' && !isNaN(newVal)) {
+        if (typeof newVal === 'number' && !isNaN(newVal) && this.priceSeries && this.volumeSeries) {
           this.updateCharts();
         }
       }
@@ -184,17 +190,23 @@ export default {
 
     async updateCharts() {
       try {
-        if (!this.productId || this.productId === 'null') {
-          this.priceSeries?.setData([]);
-          this.volumeSeries?.setData([]);
+        // 检查图表是否已初始化
+        if (!this.priceSeries || !this.volumeSeries) {
+          console.warn('图表尚未初始化');
+          return;
+        }
+
+        if (!this.productId || isNaN(this.productId) || this.productId < 0) {
+          this.priceSeries.setData([]);
+          this.volumeSeries.setData([]);
           return;
         }
 
         const data = await this.fetchHistoryData();
         
         if (!data || data.length === 0) {
-          this.priceSeries?.setData([]);
-          this.volumeSeries?.setData([]);
+          this.priceSeries.setData([]);
+          this.volumeSeries.setData([]);
           return;
         }
 
@@ -232,165 +244,146 @@ export default {
 
       } catch (err) {
         console.error('图表数据更新错误:', err);
-        this.priceSeries?.setData([]);
-        this.volumeSeries?.setData([]);
+        if (this.priceSeries && this.volumeSeries) {
+          this.priceSeries.setData([]);
+          this.volumeSeries.setData([]);
+        }
       }
     },
 
     initCharts() {
-      const commonOptions = {
-        layout: {
-          backgroundColor: '#ffffff',
-          textColor: '#333',
-        },
-        grid: {
-          vertLines: { color: '#f0f0f0' },
-          horzLines: { color: '#f0f0f0' },
-        },
-        crosshair: {
-          mode: 1,  // 十字准星模式
-          vertLine: {
-            width: 1,
-            color: '#999',
-            style: 1,  // 实线
-            labelVisible: true,  // 显示标签
-            labelBackgroundColor: '#fff',  // 标签背景色
+      try {
+        // 检查DOM元素是否存在
+        if (!this.$refs.priceChartContainer || !this.$refs.volumeChartContainer) {
+          console.warn('图表容器未找到');
+          return;
+        }
+
+        const commonOptions = {
+          layout: {
+            backgroundColor: '#ffffff',
+            textColor: '#333',
           },
-          horzLine: {
-            visible: false,  // 隐藏水平线
+          grid: {
+            vertLines: { color: '#f0f0f0' },
+            horzLines: { color: '#f0f0f0' },
+          },
+          crosshair: {
+            mode: 1,  // 十字准星模式
+            vertLine: {
+              width: 1,
+              color: '#999',
+              style: 1,  // 实线
+              labelVisible: true,  // 显示标签
+              labelBackgroundColor: '#fff',  // 标签背景色
+            },
+            horzLine: {
+              visible: false,  // 隐藏水平线
+            }
+          },
+          timeScale: {
+            borderColor: '#ddd',
+            timeVisible: true,
+            secondsVisible: false,
+            rightOffset: 0,
+            barSpacing: 6,
+            fixLeftEdge: true,
+            fixRightEdge: true,
+            rightBarStaysOnScroll: true,
+            tickMarkFormatter: (time) => {
+              const date = new Date(time * 1000);
+              return date.getHours().toString().padStart(2, '0') + ':' + 
+                     date.getMinutes().toString().padStart(2, '0');
+            }
           }
-        },
-        timeScale: {
-          borderColor: '#ddd',
-          timeVisible: true,
-          secondsVisible: false,
-          rightOffset: 0,
-          barSpacing: 6,
-          fixLeftEdge: true,
-          fixRightEdge: true,
-          rightBarStaysOnScroll: true,
-          tickMarkFormatter: (time) => {
-            const date = new Date(time * 1000);
-            return date.getHours().toString().padStart(2, '0') + ':' + 
-                   date.getMinutes().toString().padStart(2, '0');
+        };
+
+        // 初始化价格图表
+        this.priceChart = createChart(this.$refs.priceChartContainer, {
+          ...commonOptions,
+          width: this.$refs.priceChartContainer.clientWidth,
+          height: 400,
+          leftPriceScale: {
+            visible: true,
+            borderColor: '#ddd',
+            scaleMargins: {
+              top: 0.1,
+              bottom: 0.1,
+            }
+          },
+          rightPriceScale: {
+            visible: false
           }
-        }
-      };
+        });
 
-      // 初始化价格图表
-      this.priceChart = createChart(this.$refs.priceChartContainer, {
-        ...commonOptions,
-        width: this.$refs.priceChartContainer.clientWidth,
-        height: 400,
-        leftPriceScale: {
-          visible: true,
-          borderColor: '#ddd',
-          scaleMargins: {
-            top: 0.1,
-            bottom: 0.1,
+        // 初始化成交量图表
+        this.volumeChart = createChart(this.$refs.volumeChartContainer, {
+          ...commonOptions,
+          width: this.$refs.volumeChartContainer.clientWidth,
+          height: 200,
+          leftPriceScale: {
+            visible: true,
+            borderColor: '#ddd',
+            scaleMargins: {
+              top: 0.1,
+              bottom: 0.1,
+            }
+          },
+          rightPriceScale: {
+            visible: false
           }
-        },
-        rightPriceScale: {
-          visible: false
-        }
-      });
+        });
 
-      // 初始化成交量图表
-      this.volumeChart = createChart(this.$refs.volumeChartContainer, {
-        ...commonOptions,
-        width: this.$refs.volumeChartContainer.clientWidth,
-        height: 200,
-        leftPriceScale: {
-          visible: true,
-          borderColor: '#ddd',
-          scaleMargins: {
-            top: 0.1,
-            bottom: 0.1,
+        // 添加价格数据系列
+        this.priceSeries = this.priceChart.addLineSeries({
+          color: '#ff7f50',
+          lineWidth: 2,
+          crosshairMarkerVisible: true,
+          priceFormat: {
+            type: 'price',
+            precision: 3,
+            minMove: 0.001,
+          },
+          lastValueVisible: true,
+          priceLineVisible: false,
+          priceScaleId: 'left',
+        });
+
+        // 添加成交量数据系列
+        this.volumeSeries = this.volumeChart.addHistogramSeries({
+          color: '#808080',
+          priceFormat: {
+            type: 'volume',
+            precision: 0,
+          },
+          lastValueVisible: true,
+          priceLineVisible: false,
+          priceScaleId: 'left'
+        });
+
+        // 同步两个图表的十字准星
+        this.priceChart.subscribeCrosshairMove((param) => {
+          if (param.point && this.volumeChart) {
+            this.volumeChart.setCrosshairPosition(param.point, param.time);
           }
-        },
-        rightPriceScale: {
-          visible: false
-        }
-      });
+        });
 
-      // 添加价格数据系列
-      this.priceSeries = this.priceChart.addLineSeries({
-        color: '#ff7f50',
-        lineWidth: 2,
-        crosshairMarkerVisible: true,
-        priceFormat: {
-          type: 'price',
-          precision: 3,
-          minMove: 0.001,
-        },
-        lastValueVisible: true,
-        priceLineVisible: false,
-        priceScaleId: 'left',
-        // 添加tooltip配置
-        crosshairMarkerRadius: 4,
-        crosshairMarkerBorderColor: '#fff',
-        crosshairMarkerBackgroundColor: '#ff7f50',
-      });
-
-      // 添加成交量数据系列
-      this.volumeSeries = this.volumeChart.addHistogramSeries({
-        color: '#808080',
-        priceFormat: {
-          type: 'volume',
-          precision: 0,
-        },
-        lastValueVisible: true,
-        priceLineVisible: false,
-        priceScaleId: 'left'
-      });
-
-      // 添加十字准星移动事件监听
-      this.priceChart.subscribeCrosshairMove((param) => {
-        if (param.time) {
-          const price = param.seriesPrices.get(this.priceSeries);
-          if (price) {
-            // 更新价格标签
-            this.priceSeries.setMarkers([{
-              time: param.time,
-              position: 'aboveBar',
-              color: '#ff7f50',
-              shape: 'circle',
-              text: `价格: ${price.toFixed(3)}`
-            }]);
+        this.volumeChart.subscribeCrosshairMove((param) => {
+          if (param.point && this.priceChart) {
+            this.priceChart.setCrosshairPosition(param.point, param.time);
           }
-        }
-      });
+        });
 
-      this.volumeChart.subscribeCrosshairMove((param) => {
-        if (param.time) {
-          const volume = param.seriesPrices.get(this.volumeSeries);
-          if (volume) {
-            // 更新成交量标签
-            this.volumeSeries.setMarkers([{
-              time: param.time,
-              position: 'aboveBar',
-              color: '#808080',
-              shape: 'circle',
-              text: `成交量: ${Math.round(volume).toLocaleString()}`
-            }]);
+        // 初始化完成后更新数据
+        this.$nextTick(() => {
+          if (this.productId && !isNaN(this.productId)) {
+            this.updateCharts();
           }
-        }
-      });
+        });
 
-      // 同步两个图表的十字准星
-      this.priceChart.subscribeCrosshairMove((param) => {
-        if (param.point) {
-          this.volumeChart.setCrosshairPosition(param.point, param.time);
-        }
-      });
-
-      this.volumeChart.subscribeCrosshairMove((param) => {
-        if (param.point) {
-          this.priceChart.setCrosshairPosition(param.point, param.time);
-        }
-      });
-
-      this.updateCharts();
+      } catch (err) {
+        console.error('图表初始化错误:', err);
+      }
     },
 
     handleResize() {
