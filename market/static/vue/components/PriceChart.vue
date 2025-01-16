@@ -212,7 +212,7 @@ export default {
 
         const uniqueData = new Map();
         data.forEach(item => {
-          const time = Math.floor(item.time / 1000);
+          const time = item.time;
           if (!uniqueData.has(time) || item.time > uniqueData.get(time).time) {
             uniqueData.set(time, {
               time: time,
@@ -227,15 +227,15 @@ export default {
 
         // 更新价格图表数据
         this.priceSeries.setData(formattedData.map(item => ({
-          time: item.time,
+          time: new Date(item.time).getTime() / 1000,
           value: item.value
         })));
 
-        // 更新成交量图表数据，添加颜色区分
+        // 更新成交量图表数据
         const volumeData = formattedData.map((item, index) => {
           const prevItem = index > 0 ? formattedData[index - 1] : null;
           return {
-            time: item.time,
+            time: new Date(item.time).getTime() / 1000,
             value: item.volume,
             color: prevItem ? (item.value >= prevItem.value ? '#26a69a' : '#ef5350') : '#808080'
           };
