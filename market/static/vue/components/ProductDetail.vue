@@ -108,11 +108,6 @@ export default {
   computed: {
     isValidProduct() {
       return typeof this.productId === 'number' && !isNaN(this.productId);
-    },
-    baseUrl() {
-      return window.location.hostname === 'sc.aiwanba.net' 
-        ? 'https://sc.aiwanba.net'
-        : ''
     }
   },
   data() {

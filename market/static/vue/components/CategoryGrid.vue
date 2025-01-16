@@ -251,11 +251,6 @@ export default {
         id,
         name: this.PRODUCT_TYPES[id]
       }));
-    },
-    baseUrl() {
-      return window.location.hostname === 'sc.aiwanba.net' 
-        ? 'https://sc.aiwanba.net'
-        : ''
     }
   },
   methods: {
