@@ -233,62 +233,69 @@ export default {
 
         const uniqueData = new Map();
         data.forEach(item => {
-          const time = item.time;
-          console.log('处理数据项:', {
-            原始时间戳: item.time,
-            价格: item.price,
-            数量: item.volume
-          });
+          const timeInSeconds = Math.floor(item.time / 1000);
+          // 根据时间周期对齐时间戳
+          let alignedTime = timeInSeconds;
+          if (this.currentPeriod === '1d') {
+            alignedTime = Math.floor(timeInSeconds / 3600) * 3600;
+          } else if (this.currentPeriod === '1m') {
+            alignedTime = Math.floor(timeInSeconds / 86400) * 86400;
+          }
 
-          if (!uniqueData.has(time) || item.time > uniqueData.get(time).time) {
-            uniqueData.set(time, {
-              time: time,
+          // 如果是相同时间戳的数据，取平均值
+          if (uniqueData.has(alignedTime)) {
+            const existing = uniqueData.get(alignedTime);
+            existing.value = (existing.value * existing.count + item.price) / (existing.count + 1);
+            existing.volume += item.volume;
+            existing.count += 1;
+          } else {
+            uniqueData.set(alignedTime, {
+              time: alignedTime,
               value: item.price,
-              volume: item.volume
+              volume: item.volume,
+              count: 1
             });
           }
         });
 
+        // 转换为数组并确保按时间升序排序
         const formattedData = Array.from(uniqueData.values())
-          .sort((a, b) => a.time - b.time);
-        
-        console.log('格式化后的数据:', formattedData);
+          .sort((a, b) => a.time - b.time)
+          .map(item => ({
+            time: item.time,
+            value: item.value,
+            volume: item.volume
+          }));
 
         // 更新价格图表数据
-        const priceData = formattedData.map(item => {
-          const timeInSeconds = Math.floor(item.time / 1000);
-          console.log('价格数据转换:', {
-            原始时间戳: item.time,
-            转换后时间戳: timeInSeconds,
-            对应时间: new Date(timeInSeconds * 1000).toLocaleString(),
-            价格: item.value
-          });
-          return {
-            time: timeInSeconds,
-            value: item.value
-          };
-        });
-
-        this.priceSeries.setData(priceData);
+        const priceData = formattedData.map(item => ({
+          time: item.time,
+          value: item.value
+        }));
 
         // 更新成交量图表数据
         const volumeData = formattedData.map((item, index) => {
           const prevItem = index > 0 ? formattedData[index - 1] : null;
-          const timeInSeconds = Math.floor(item.time / 1000);
-          console.log('成交量数据转换:', {
-            原始时间戳: item.time,
-            转换后时间戳: timeInSeconds,
-            对应时间: new Date(timeInSeconds * 1000).toLocaleString(),
-            成交量: item.volume,
-            涨跌: prevItem ? (item.value >= prevItem.value ? '涨' : '跌') : '首条'
-          });
           return {
-            time: timeInSeconds,
+            time: item.time,
             value: item.volume,
             color: prevItem ? (item.value >= prevItem.value ? '#26a69a' : '#ef5350') : '#808080'
           };
         });
 
+        // 设置数据前先检查是否有重复时间戳
+        const timeSet = new Set();
+        const hasDuplicates = priceData.some(item => {
+          if (timeSet.has(item.time)) return true;
+          timeSet.add(item.time);
+          return false;
+        });
+
+        if (hasDuplicates) {
+          console.warn('数据中存在重复的时间戳，已进行合并处理');
+        }
+
+        this.priceSeries.setData(priceData);
         this.volumeSeries.setData(volumeData);
 
         console.log('图表数据更新完成');
@@ -347,9 +354,24 @@ export default {
           secondsVisible: false,
           tickMarkFormatter: (time) => {
             const date = new Date(time * 1000);
-            const hours = date.getHours().toString().padStart(2, '0');
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-            return `${hours}:${minutes}`;
+            // 根据不同的时间周期显示不同的格式
+            if (this.currentPeriod === '1h') {
+              // 1小时周期显示 HH:mm
+              const hours = date.getHours().toString().padStart(2, '0');
+              const minutes = date.getMinutes().toString().padStart(2, '0');
+              return `${hours}:${minutes}`;
+            } else if (this.currentPeriod === '1d') {
+              // 1天周期显示 MM-DD HH:00
+              const month = (date.getMonth() + 1).toString().padStart(2, '0');
+              const day = date.getDate().toString().padStart(2, '0');
+              const hours = date.getHours().toString().padStart(2, '0');
+              return `${month}-${day} ${hours}:00`;
+            } else {
+              // 1月周期显示 MM-DD
+              const month = (date.getMonth() + 1).toString().padStart(2, '0');
+              const day = date.getDate().toString().padStart(2, '0');
+              return `${month}-${day}`;
+            }
           },
           rightOffset: 5,
           barSpacing: 3,
