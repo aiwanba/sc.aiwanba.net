@@ -308,17 +308,32 @@ export default {
         this.priceSeries.setData(priceData);
         this.volumeSeries.setData(volumeData);
 
-        // 为所有数据点添加标记
-        const markers = priceData.map(point => ({
+        // 为价格图表添加标记
+        const priceMarkers = priceData.map(point => ({
           time: point.time,
           position: 'aboveBar',
           color: '#45b97c',
           shape: 'circle',
           text: point.value.toFixed(3),
-          size: 0.5  // 减小标记的大小
+          size: 0.5
         }));
 
-        this.priceSeries.setMarkers(markers);
+        // 为成交量图表添加标记
+        const volumeMarkers = volumeData.map(point => ({
+          time: point.time,
+          position: 'aboveBar',
+          color: point.color,  // 使用与柱状图相同的颜色
+          shape: 'circle',
+          text: point.value >= 1000000 
+            ? (point.value / 1000000).toFixed(1) + 'M'
+            : point.value >= 1000
+            ? (point.value / 1000).toFixed(1) + 'K'
+            : point.value.toString(),
+          size: 0.5
+        }));
+
+        this.priceSeries.setMarkers(priceMarkers);
+        this.volumeSeries.setMarkers(volumeMarkers);
 
         console.log('图表数据更新完成');
 
@@ -501,7 +516,15 @@ export default {
           }
         },
         // 添加成交量标签配置
-        lastValueVisible: true
+        lastValueVisible: true,
+        // 添加数据点配置
+        markers: [],
+        // 显示数据点
+        pointsVisible: true,
+        pointSize: 2,
+        pointFillColor: '#26a69a',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 1
       };
     },
 
@@ -568,16 +591,13 @@ export default {
         }
 
         try {
-          // 获取价格和成交量数据
-          const price = param.seriesPrices?.get(this.priceSeries);
-          const volume = param.seriesPrices?.get(this.volumeSeries);
-
           // 获取当前时间点的数据
-          const seriesData = this.priceSeries.dataByIndex(param.logical - 1);
-          console.log('Series Data:', seriesData);
+          const priceData = this.priceSeries.dataByIndex(param.logical - 1);
+          const volumeData = this.volumeSeries.dataByIndex(param.logical - 1);
+          console.log('Series Data:', { priceData, volumeData });
 
-          if (seriesData) {
-            const date = new Date(seriesData.time * 1000);
+          if (priceData && volumeData) {
+            const date = new Date(priceData.time * 1000);
             let timeStr;
             
             // 根据不同的时间周期显示不同的格式
@@ -589,9 +609,16 @@ export default {
               timeStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
             }
 
+            // 格式化成交量显示
+            const formattedVolume = volumeData.value >= 1000000 
+              ? (volumeData.value / 1000000).toFixed(1) + 'M'
+              : volumeData.value >= 1000
+              ? (volumeData.value / 1000).toFixed(1) + 'K'
+              : volumeData.value.toString();
+
             this.hoveredData = {
-              price: seriesData.value.toFixed(3),
-              volume: volume ? Math.round(volume).toLocaleString() : '0',
+              price: priceData.value.toFixed(3),
+              volume: formattedVolume,
               time: timeStr
             };
 
