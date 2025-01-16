@@ -322,7 +322,7 @@ export default {
           // 配置十字虚线
           mode: 1,  // 0 = 普通, 1 = 磁性吸附
           vertLine: {
-            labelVisible: true,
+            labelVisible: false,
             labelBackgroundColor: '#45b97c',
             style: 3,  // 0 = 实线, 1 = 点线, 2 = 短划线, 3 = 虚线
             width: 1,
