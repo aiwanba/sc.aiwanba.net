@@ -52,20 +52,22 @@
             <div class="section-content">
               <table class="info-table">
                 <tr>
-                  <td class="info-label">服务器</td>
-                  <td class="info-value">{{ serverType === 0 ? '商业大亨' : '企业家' }}</td>
-                </tr>
-                <tr>
-                  <td class="info-label">所属分组</td>
-                  <td class="info-value">{{ getProductGroup() }}</td>
-                </tr>
-                <tr>
-                  <td class="info-label">商品名称</td>
-                  <td class="info-value">{{ PRODUCT_TYPES[productId] || '未知商品' }}</td>
-                </tr>
-                <tr>
-                  <td class="info-label">商品ID</td>
-                  <td class="info-value">{{ productId }}</td>
+                  <td class="info-group">
+                    <span class="info-label">服务器</span>
+                    <span class="info-value">{{ serverType === 0 ? '商业大亨' : '企业家' }}</span>
+                  </td>
+                  <td class="info-group">
+                    <span class="info-label">所属分组</span>
+                    <span class="info-value">{{ getProductGroup() }}</span>
+                  </td>
+                  <td class="info-group">
+                    <span class="info-label">商品名称</span>
+                    <span class="info-value">{{ PRODUCT_TYPES[productId] || '未知商品' }}</span>
+                  </td>
+                  <td class="info-group">
+                    <span class="info-label">商品ID</span>
+                    <span class="info-value">{{ productId }}</span>
+                  </td>
                 </tr>
               </table>
             </div>
@@ -325,26 +327,22 @@ export default {
 }
 
 .detail-section {
-  padding: 8px;
-  border-bottom: 1px solid #eee;
+  padding: 12px;
   background-color: #fff;
-}
-
-.detail-section:last-child {
-  border-bottom: none;
+  margin-bottom: 0;
 }
 
 .section-header {
   font-size: 12px;
   font-weight: bold;
   color: #333;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
   padding-bottom: 4px;
   border-bottom: 2px solid #45b97c;
 }
 
 .section-content {
-  padding: 4px;
+  padding: 0;
 }
 
 /* 基本信息表格样式 */
@@ -352,39 +350,61 @@ export default {
   width: 100%;
   border-collapse: collapse;
   background-color: #fff;
-  border-radius: 4px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: 10px;
-  border: 1px solid #ebeef5;
+  font-size: 12px;
 }
 
-.info-table th,
-.info-table td {
+.info-table tr {
+  display: flex;
+  justify-content: space-between;
+  gap: 1px;
+  background-color: #f8f9fa;
+}
+
+.info-group {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  min-width: 0;  /* 防止内容溢出 */
+}
+
+.info-label {
   padding: 8px;
-  border: 1px solid #ebeef5;
-  text-align: center;
-}
-
-.info-table .info-header {
-  color: #333;
-  font-size: 12px;
-  background-color: #f8f9fa;
-  border: 1px solid #ebeef5;
-  font-weight: bold;
-}
-
-.info-table .info-label {
-  background-color: #f8f9fa;
   color: #666;
-  font-size: 12px;
-  border: 1px solid #ebeef5;
+  background-color: #f8f9fa;
+  white-space: nowrap;
+  text-align: right;
+  min-width: 60px;
 }
 
-.info-table .info-value {
+.info-value {
+  padding: 8px;
   color: #333;
-  font-size: 12px;
-  border: 1px solid #ebeef5;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 响应式调整 */
+@media screen and (max-width: 768px) {
+  .info-table tr {
+    flex-direction: column;
+    gap: 1px;
+  }
+  
+  .info-group {
+    width: 100%;
+  }
+  
+  .info-label {
+    min-width: 80px;
+  }
+}
+
+.info-table tbody tr:hover {
+  background-color: transparent;
 }
 
 .info-table .info-value.price {
@@ -398,11 +418,6 @@ export default {
   color: #666;
   font-size: 11px;
   border: 1px solid #ebeef5;
-}
-
-/* 表格行悬停效果 */
-.info-table tbody tr:hover {
-  background-color: #f5f7fa;
 }
 
 /* 价格为空时的样式 */
@@ -518,6 +533,28 @@ export default {
   .detail-right {
     flex: 2;
     min-width: 600px;
+  }
+}
+
+/* 响应式调整 */
+@media screen and (max-width: 768px) {
+  .info-table tr {
+    flex-direction: column;  /* 在小屏幕上改为垂直布局 */
+  }
+  
+  .info-table .info-label,
+  .info-table .info-value {
+    width: 100%;
+    max-width: none;
+    text-align: left;
+  }
+  
+  .info-table .info-label {
+    padding-bottom: 4px;
+  }
+  
+  .info-table .info-value {
+    padding-bottom: 8px;
   }
 }
 </style>
