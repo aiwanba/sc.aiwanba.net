@@ -69,24 +69,6 @@ export default {
       refreshInterval: null
     }
   },
-  watch: {
-    serverType: {
-      handler(newVal) {
-        if (newVal !== null && this.productId !== null) {
-          this.fetchQualityData();
-        }
-      },
-      immediate: true
-    },
-    productId: {
-      handler(newVal) {
-        if (newVal !== null && this.serverType !== null) {
-          this.fetchQualityData();
-        }
-      },
-      immediate: true
-    }
-  },
   methods: {
     async fetchQualityData() {
       if (this.serverType === null || this.productId === null) {
@@ -97,130 +79,65 @@ export default {
       this.error = null;
       try {
         const response = await fetch(
-          `/market/api/v1/market/quality/${this.serverType}/${this.productId}`,
-          {
-            method: 'GET',
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json'
-            }
-          }
+          `/market/api/v1/market/quality/${this.serverType}/${this.productId}`
         );
-
-        if (!response.ok) {
-          throw new Error(`获取数据失败: ${response.status}`);
-        }
-
-        const data = await response.json();
-        if (data.code === 0) {
-          this.qualityData = this.processQualityData(data.data);
-          this.lastUpdateTime = new Date().toLocaleString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-          });
+        const result = await response.json();
+        
+        if (result.code === 0 && result.data) {
+          this.qualityData = result.data;
+          // 更新最后更新时间
+          if (this.qualityData.length > 0) {
+            const latestTime = Math.max(
+              ...this.qualityData
+                .map(item => item.updateTime)
+                .filter(Boolean)
+                .map(time => new Date(time).getTime())
+            );
+            this.lastUpdateTime = new Date(latestTime).toLocaleString();
+          }
         } else {
-          throw new Error(data.message || '获取数据失败');
+          this.error = result.msg || '获取数据失败';
         }
-      } catch (err) {
-        console.error('Error details:', err);
-        this.error = err.message;
+      } catch (e) {
+        this.error = `获取数据失败: ${e.message}`;
+        console.error('获取品质数据失败:', e);
       } finally {
         this.loading = false;
       }
     },
-    processQualityData(data) {
-      const qualities = Array.from({ length: 13 }, (_, i) => ({
-        quality: i,
-        latestPrice: '-',
-        lowestPrice: '-',
-        highestPrice: '-',
-        averagePrice: '-',
-        updateTime: '-'
-      }));
-
-      data.forEach(item => {
-        if (item.quality >= 0 && item.quality <= 12) {
-          qualities[item.quality] = {
-            quality: item.quality,
-            latestPrice: this.formatPrice(item.latest_price),
-            lowestPrice: this.formatPrice(item.lowest_price),
-            highestPrice: this.formatPrice(item.highest_price),
-            averagePrice: this.formatPrice(item.average_price),
-            updateTime: this.formatTime(item.update_time)
-          };
-        }
-      });
-
-      return qualities;
-    },
-    formatPrice(price) {
-      if (!price || price === '-') return '-';
-      return new Intl.NumberFormat('zh-CN', {
-        minimumFractionDigits: 3,
-        maximumFractionDigits: 3
-      }).format(price);
-    },
-    formatTime(time) {
-      if (!time || time === '-') return '-';
-      return this.getRelativeTime(new Date(time));
-    },
-    getRelativeTime(date) {
-      const now = new Date();
-      const diffInSeconds = Math.floor((now - date) / 1000);
-      
-      if (diffInSeconds < 60) {
-        if (diffInSeconds < 10) {
-          return '几秒前';
-        }
-        return `${Math.floor(diffInSeconds / 10) * 10}秒前`;
-      }
-      
-      const diffInMinutes = Math.floor(diffInSeconds / 60);
-      if (diffInMinutes < 60) {
-        return `${diffInMinutes}分钟前`;
-      }
-      
-      const diffInHours = Math.floor(diffInMinutes / 60);
-      if (diffInHours < 24) {
-        return `${diffInHours}小时前`;
-      }
-      
-      const diffInDays = Math.floor(diffInHours / 24);
-      if (diffInDays < 30) {
-        return `${diffInDays}天前`;
-      }
-      
-      return date.toLocaleString('zh-CN', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      });
-    },
+    
     startAutoRefresh() {
+      // 每60秒刷新一次数据
       this.refreshInterval = setInterval(() => {
         this.fetchQualityData();
       }, 60000);
     },
+    
     stopAutoRefresh() {
       if (this.refreshInterval) {
         clearInterval(this.refreshInterval);
+        this.refreshInterval = null;
       }
     }
   },
   mounted() {
-    if (this.serverType !== null && this.productId !== null) {
-      this.startAutoRefresh();
-    }
+    this.fetchQualityData();
+    this.startAutoRefresh();
   },
   beforeUnmount() {
     this.stopAutoRefresh();
+  },
+  watch: {
+    serverType: {
+      handler() {
+        this.fetchQualityData();
+      }
+    },
+    productId: {
+      handler() {
+        this.fetchQualityData();
+      }
+    }
   }
 }
 </script>

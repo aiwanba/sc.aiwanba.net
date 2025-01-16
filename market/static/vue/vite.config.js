@@ -5,14 +5,24 @@ import path from 'path'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
-  base: './',
+  base: '/market/static/dist/',
   build: {
     outDir: '../dist',
-    assetsDir: 'assets',
+    assetsDir: '',
     emptyOutDir: true,
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'index.html')
+      },
+      output: {
+        entryFileNames: 'main.js',
+        chunkFileNames: '[name].js',
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name === 'style.css') {
+            return 'main.css'
+          }
+          return '[name][extname]'
+        }
       }
     }
   },
