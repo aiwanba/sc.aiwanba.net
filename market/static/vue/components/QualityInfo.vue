@@ -23,7 +23,7 @@
               <td class="info-value price">{{ formatPrice(item.lowestPrice) }}</td>
               <td class="info-value price">{{ formatPrice(item.highestPrice) }}</td>
               <td class="info-value price">{{ formatPrice(item.averagePrice) }}</td>
-              <td class="info-value time">{{ item.updateTime || '-' }}</td>
+              <td class="info-value time">{{ formatDateTime(item.updateTime) }}</td>
             </tr>
           </template>
           <template v-else>
@@ -74,6 +74,20 @@ export default {
       if (price === null || price === undefined) return '-';
       return Number(price).toFixed(3);
     },
+    formatDateTime(timeStr) {
+      if (!timeStr) return '-';
+      // 将服务器返回的 UTC 时间转换为本地时间
+      const date = new Date(timeStr + 'Z'); // 添加 Z 表示这是 UTC 时间
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+    },
     async fetchQualityData() {
       if (this.serverType === null || this.productId === null) {
         return;
@@ -99,10 +113,10 @@ export default {
           if (this.qualityData.length > 0) {
             const latestTime = Math.max(
               ...this.qualityData
-                .map(item => new Date(item.updateTime).getTime())
+                .map(item => new Date(item.updateTime + 'Z').getTime())
                 .filter(time => !isNaN(time))
             );
-            this.lastUpdateTime = new Date(latestTime).toLocaleString('zh-CN');
+            this.lastUpdateTime = this.formatDateTime(new Date(latestTime).toISOString());
           }
         } else {
           throw new Error(result.msg || '获取数据失败');
