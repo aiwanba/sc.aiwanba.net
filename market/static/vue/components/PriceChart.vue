@@ -371,7 +371,7 @@ export default {
           mode: 1,  // 保持磁性吸附
           vertLine: {
             visible: true,
-            labelVisible: true,
+            labelVisible: false, // 隐藏垂直线的标签
             style: 1,  // 改为点线样式
             width: 1,
             color: '#758696',
@@ -379,7 +379,7 @@ export default {
           },
           horzLine: {
             visible: true,
-            labelVisible: true,
+            labelVisible: true, // 垂直线的标签
             style: 1,  // 改为点线样式
             width: 1,
             color: '#758696',
