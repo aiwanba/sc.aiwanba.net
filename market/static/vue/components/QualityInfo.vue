@@ -38,9 +38,6 @@
           </template>
         </tbody>
       </table>
-      <div v-if="lastUpdateTime" class="update-time">
-        最后更新: {{ lastUpdateTime }}
-      </div>
     </div>
   </div>
 </template>
