@@ -1,0 +1,60 @@
+<!-- 任务列表表格 -->
+<div class="card mt-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="card-title mb-0">采集任务配置表：任务列表</h5>
+            <button class="btn btn-danger" onclick="deleteAllTasks()">
+                <i class="bi bi-trash"></i> 删除所有配置
+            </button>
+        </div>
+
+        <!-- 分页控制 -->
+        <div class="pagination-container">
+            <button class="btn btn-sm btn-outline-primary" onclick="previousPage()">上一页</button>
+            <span class="mx-3">第 <span id="currentPage">1</span> 页，共 <span id="totalPages">1</span> 页</span>
+            <button class="btn btn-sm btn-outline-primary" onclick="nextPage()">下一页</button>
+        </div>
+
+        <div class="table-container">
+            <table class="table table-striped mb-0">
+                <thead class="table-fixed-header">
+                    <tr>
+                        <th>ID</th>
+                        <th>服务器类型</th>
+                        <th>商品类型</th>
+                        <th>最后更新时间</th>
+                        <th>采集数据量</th>
+                        <th>采集状态</th>
+                        <th>总采集次数</th>
+                        <th>实际记录数</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="taskTableBody">
+                    {% for task in tasks %}
+                    {% set stats = table_stats['market_' ~ task.server_type ~ '_' ~ task.product_type] %}
+                    <tr data-task-id="{{ task.id }}">
+                        <td>{{ task.id }}</td>
+                        <td>{{ servers[task.server_type] }} ({{ task.server_type }})</td>
+                        <td>{{ products[task.product_type] }} ({{ task.product_type }})</td>
+                        <td class="last-time">{{ stats.last_update_time if stats else '-' }}</td>
+                        <td class="collection-count">{{ stats.last_batch_count if stats else 0 }}</td>
+                        <td class="collection-status">
+                            <span class="badge text-bg-{{ 'success' if task.last_collection_success else 'danger' }}">
+                                {{ '成功' if task.last_collection_success else '失败' }}
+                            </span>
+                        </td>
+                        <td class="total-collections">{{ stats.batch_count if stats else 0 }}</td>
+                        <td class="record-count">{{ stats.total_count if stats else 0 }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" onclick="deleteTask('{{ task.id }}')">
+                                删除
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div> 

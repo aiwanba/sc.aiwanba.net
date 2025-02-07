@@ -1,0 +1,75 @@
+/* 顶部导航栏样式 */
+.header-bar {
+    background-color: #f8f9fa;
+    padding: 10px 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.header-title {
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+/* 分页样式 */
+.pagination-container {
+    margin: 1rem 0;
+    text-align: center;
+}
+
+/* 表格样式 */
+.table-container {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.table-fixed-header {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 1;
+}
+
+/* 商品列表样式 */
+.product-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 1rem;
+}
+
+.product-group {
+    margin-bottom: 0.75rem;
+}
+
+.product-group-title {
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+    color: #495057;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 0.25rem;
+}
+
+.product-group .form-check {
+    display: inline-block;
+    margin-right: 0.25rem;
+    margin-bottom: 0.15rem;
+    min-width: 130px;
+    font-size: 0.9rem;
+}
+
+/* 状态标签样式 */
+.badge {
+    font-size: 0.9em;
+    padding: 0.4em 0.6em;
+}
+
+/* 表单控件样式 */
+.form-control-sm {
+    height: calc(1.5em + 0.5rem + 2px);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+} 

@@ -1,0 +1,43 @@
+<!-- 创建新任务表单 -->
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title mb-4">采集任务配置表：创建新任务</h5>
+        <form id="createTaskForm" onsubmit="createTask(event)">
+            <!-- 服务器类型选择 -->
+            <div class="mb-4">
+                <h6 class="mb-3">服务器类型</h6>
+                <select class="form-select" name="server_type" id="serverSelect" required>
+                    <!-- 由JS动态填充 -->
+                </select>
+            </div>
+
+            <!-- 商品类型选择 -->
+            <div class="mb-4">
+                <h6 class="mb-3">商品类型</h6>
+                <div class="mb-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="toggleAllProducts()">
+                        全选/取消
+                    </button>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                            按分组选择
+                        </button>
+                        <ul class="dropdown-menu" id="productGroupMenu">
+                            <!-- 由JS动态填充 -->
+                        </ul>
+                    </div>
+                </div>
+                <div class="product-list">
+                    <div id="productList" class="row g-3">
+                        <!-- 由JS动态填充 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 提交按钮 -->
+            <div>
+                <button type="submit" class="btn btn-primary">创建任务</button>
+            </div>
+        </form>
+    </div>
+</div> 
