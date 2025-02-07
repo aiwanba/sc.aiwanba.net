@@ -2,7 +2,7 @@
   <div class="market-container">
     <!-- 顶部导航栏 -->
     <div class="nav-header">
-      <div class="nav-brand">Simco Tools</div>
+      <div class="nav-brand">Sim Companies 数据分析网站</div>
       <div class="nav-right">
         <button class="nav-btn">
           <span>主题</span>
